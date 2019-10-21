@@ -1,0 +1,9 @@
+{
+  "name": "super-generous-recipes",
+  "version": "0.0.1",
+  "title": "Super Generous Recipes",
+  "author": "Mapster",
+  "description": "Makes all recipes requirements 1 and total output is the amount of ingredients requiremented.\nExample:\nCogs output 2 (IronPlate and Iron Ore)\nGreen Chips output 5 (IronPlate + IronOre + Copper Cable + Copper plate + Copper Ore)",
+  "dependencies": ["base"],
+  "factorio_version": "0.17"
+}
