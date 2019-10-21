@@ -1,9 +1,9 @@
 {
   "name": "super-generous-recipes",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "title": "Super Generous Recipes",
-  "author": "Mapster",
-  "description": "Makes all recipes requirements 1 and total output is the amount of ingredients requiremented.\nExample:\nCogs output 2 (IronPlate and Iron Ore)\nGreen Chips output 5 (IronPlate + IronOre + Copper Cable + Copper plate + Copper Ore)",
+  "author": "M4pster",
+  "description": "All recipe ingredient amounts set to 1. The more advanced items you craft the more you get out of them. StackSize is 50 times the output size.",
   "dependencies": ["base"],
   "factorio_version": "0.17"
 }

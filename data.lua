@@ -26,7 +26,7 @@ end
 function get_stack_size_of_item (item_name)
 	local item = cached_items[item_name]
 	if item == nil then
-		log("LOG: Unable to get stack_size for: " .. item_name)
+		--log("LOG: Unable to get stack_size for: " .. item_name)
 		return 1
 	else
 		return item['stack_size']
@@ -44,10 +44,6 @@ function get_recipe_name(recipe)
 		return nil
 	end
 end
-
------------------------------
------------------------------
------------------------------
 
 function get_total_ingredients_required (recipe)
 	-- flame ammo = crude oil + steel bar
@@ -76,7 +72,7 @@ function get_total_ingredients_required (recipe)
 
 			total = total + get_total_ingredients_required(d) + 1
 		else
-			log("LOG: Did not find recipe for " .. (ingredient_name or 'nil'))
+			--log("LOG: Did not find recipe for " .. (ingredient_name or 'nil'))
 			total = total + 1
 		end
 
@@ -85,6 +81,13 @@ function get_total_ingredients_required (recipe)
 	return total
 end
 
+-----------------------------
+-----------------------------
+-----------------------------
+
+-- Set all amount of ingredients to 1
+-- Set total output to total amount of ingredients required
+-- Set stack_size to total output * 50
 function modifyIngredients (recipe)
 	if recipe then
 		-- change all ingredients to 1
@@ -100,20 +103,23 @@ function modifyIngredients (recipe)
 		if recipe.result and recipe.ingredients then
 
 			-- calculate total ingredients needed
-			local totalIngredientTypes = 1
-			local stack_size = get_stack_size_of_item(recipe.result)
-			if stack_size > 1 then
-				totalIngredientTypes = get_total_ingredients_required(recipe)
-				if totalIngredientTypes > stack_size then
-					totalIngredientTypes = stack_size
-				end
+			local item = cached_items[recipe.result]
+			local totalIngredientTypes = get_total_ingredients_required(recipe)
+			local stack_size = item["stack_size"]
+			if item["equipment_grid"] ~= nil then
+				log("StackSize 1: " .. dump(item))
+				stack_size = 1
+				totalIngredientTypes = 1
+			else
+				stack_size = totalIngredientTypes * 50
 			end
 
 			-- assign total amount crafted
+			item["stack_size"] = stack_size
 			recipe.result_count = totalIngredientTypes
 			log(get_recipe_name(recipe) .. " = " .. totalIngredientTypes)
 		else
-			log("Skipping ingredient modification for " .. get_recipe_name(recipe))
+			--log("Skipping ingredient modification for " .. get_recipe_name(recipe))
 		end
 	end
 end
@@ -136,23 +142,21 @@ end
 
 
 function cacheRecipes()
-	-- recipes
 	for i, recipe in pairs(data.raw.recipe) do
 		if recipe.type == "recipe" then
 			local recipe_name = get_recipe_name(recipe)
 			if recipe_name then
 				cached_recipes[recipe_name] = recipe
 			else
-				log("Skipped Recipe: " .. dump(recipe))
+				--log("Skipped Recipe: " .. dump(recipe))
 			end
 		else
-			log("Skipped Recipe: " .. dump(recipe))
+			--log("Skipped Recipe: " .. dump(recipe))
 		end
 	end
 end
 
 function cacheItems(d)
-	-- items
 	for i, item in pairs(d) do
 		local t = type(item);
 		if t == "table" then
@@ -166,16 +170,16 @@ function cacheItems(d)
 	end
 end
 
+
+-------------------------------------------
+-- Start
+-------------------------------------------
+
 cacheRecipes()
 cacheItems(data.raw)
-log("Finished storing Data:")
-log("CACHED RECIPES: " .. dump(cached_recipes))
-log("CACHED ITEMS: " .. dump(cached_items))
-
--------------------------------------------
--------------------------------------------
--------------------------------------------
-
+--log("Finished storing Data:")
+--log("CACHED RECIPES: " .. dump(cached_recipes))
+--log("CACHED ITEMS: " .. dump(cached_items))
 
 for i, recipe in pairs(data.raw.recipe) do
 	local processed = processedRecipes[recipe.name]
@@ -183,7 +187,6 @@ for i, recipe in pairs(data.raw.recipe) do
 		processedRecipe(recipe)
 		processedRecipes[recipe.name] = true
 	elseif(processed ~= true) then
-		log("LOG: Skipping: " .. dump(recipe) .. " -> " .. dump(processedRecipes[recipe.name]))
+		--log("LOG: Skipping: " .. dump(recipe) .. " -> " .. dump(processedRecipes[recipe.name]))
 	end
 end
-log("=================================")
