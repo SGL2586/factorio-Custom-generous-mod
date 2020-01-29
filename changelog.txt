@@ -1,0 +1,25 @@
+---------------------------------------------------------------------------------------------------
+Version: 0.0.1
+Date: 21. 10. 2019
+  Features:
+    - Recipes work as expected
+---------------------------------------------------------------------------------------------------
+Version: 0.0.2
+Date: 22. 10. 2019
+  Features:
+    - Stack size of items is now set to 50x the total output from crafting an item.
+---------------------------------------------------------------------------------------------------
+Version: 0.0.3
+Date: 28. 10. 2019
+  Features:
+    - Now works with several mods.
+  Bugfixes
+    - Mod not breaking when a recipe is not found
+---------------------------------------------------------------------------------------------------
+Version: 0.0.4
+Date: 1. 11. 2019
+  Features:
+    - Increased stack size bonus of inserters by x50
+    - Increased stack size bonus of stack inserters by x20
+    - Added thumbnail
+---------------------------------------------------------------------------------------------------

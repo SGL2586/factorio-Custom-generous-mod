@@ -173,38 +173,41 @@ function cacheItems(d)
 	end
 end
 
-
+-------------------------------------------
 -------------------------------------------
 -- Start
 -------------------------------------------
+-------------------------------------------
 
+--
+-- Change recipes
+--
 cacheRecipes()
 cacheItems(data.raw)
-log("Finished storing Data:")
 
 for i, recipe in pairs(data.raw.recipe) do
 	local processed = processedRecipes[recipe.name]
 	if recipe.type == "recipe" and processed ~= true then
 		processedRecipe(recipe)
 		processedRecipes[recipe.name] = true
-	elseif(processed ~= true) then
-		--log("LOG: Skipping: " .. dump(recipe) .. " -> " .. dump(processedRecipes[recipe.name]))
 	end
 end
 
-log("CACHED RECIPES: " .. dump(cached_recipes))
-log("CACHED ITEMS: " .. dump(cached_items))
+--log("CACHED RECIPES: " .. dump(cached_recipes))
+--log("CACHED ITEMS: " .. dump(cached_items))
 
---log("");
---log("");
---log("KEYS:");
+
 --
---for k,v in pairs(data.raw) do
---  log("KEY: " .. dump(k))
---end
+-- Change research
 --
---log(dump((data.raw["solar-panel"])))
---
---log("");
---log("");
---log("");
+for i, tech in pairs(data.raw.technology) do
+	if tech.effects ~= nil then
+		for j, effect in pairs(tech.effects) do
+			if effect.type == "stack-inserter-capacity-bonus" then
+				effect.modifier = effect.modifier * 20
+			elseif effect.type == "inserter-stack-size-bonus" then
+				effect.modifier = effect.modifier * 50
+			end
+		end
+	end
+end
