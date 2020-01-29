@@ -12,14 +12,14 @@ function dump(o)
 	end
 
 	if type(o) == 'table' then
-	  local s = '{ '
-	  for k,v in pairs(o) do
-	     if type(k) ~= 'number' then k = '"'..k..'"' end
-	     s = s .. '['..k..'] = ' .. dump(v) .. ','
-	  end
-	  return s .. '} '
+	local s = '{ '
+	for k,v in pairs(o) do
+		if type(k) ~= 'number' then k = '"'..k..'"' end
+		s = s .. '['..k..'] = ' .. dump(v) .. ','
+	end
+	return s .. '} '
 	else
-	  return tostring(o)
+	return tostring(o)
 	end
 end
 
@@ -104,20 +104,23 @@ function modifyIngredients (recipe)
 
 			-- calculate total ingredients needed
 			local item = cached_items[recipe.result]
-			local totalIngredientTypes = get_total_ingredients_required(recipe)
-			local stack_size = item["stack_size"]
-			if item["equipment_grid"] ~= nil then
-				log("StackSize 1: " .. dump(item))
-				stack_size = 1
-				totalIngredientTypes = 1
-			else
-				stack_size = totalIngredientTypes * 50
-			end
+			if item then
+				local totalIngredientTypes = get_total_ingredients_required(recipe)
+				local stack_size = item["stack_size"]
+				if item["equipment_grid"] ~= nil then
+					stack_size = 1
+					totalIngredientTypes = 1
+				else
+					stack_size = totalIngredientTypes * 50
+				end
 
-			-- assign total amount crafted
-			item["stack_size"] = stack_size
-			recipe.result_count = totalIngredientTypes
-			log(get_recipe_name(recipe) .. " = " .. totalIngredientTypes)
+				-- assign total amount crafted
+				item["stack_size"] = stack_size
+				recipe.result_count = totalIngredientTypes
+				log(get_recipe_name(recipe) .. " = " .. totalIngredientTypes)
+			else
+				log("No recipe for " .. recipe.result)
+			end
 		else
 			--log("Skipping ingredient modification for " .. get_recipe_name(recipe))
 		end
@@ -177,9 +180,7 @@ end
 
 cacheRecipes()
 cacheItems(data.raw)
---log("Finished storing Data:")
---log("CACHED RECIPES: " .. dump(cached_recipes))
---log("CACHED ITEMS: " .. dump(cached_items))
+log("Finished storing Data:")
 
 for i, recipe in pairs(data.raw.recipe) do
 	local processed = processedRecipes[recipe.name]
@@ -190,3 +191,20 @@ for i, recipe in pairs(data.raw.recipe) do
 		--log("LOG: Skipping: " .. dump(recipe) .. " -> " .. dump(processedRecipes[recipe.name]))
 	end
 end
+
+log("CACHED RECIPES: " .. dump(cached_recipes))
+log("CACHED ITEMS: " .. dump(cached_items))
+
+--log("");
+--log("");
+--log("KEYS:");
+--
+--for k,v in pairs(data.raw) do
+--  log("KEY: " .. dump(k))
+--end
+--
+--log(dump((data.raw["solar-panel"])))
+--
+--log("");
+--log("");
+--log("");
