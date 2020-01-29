@@ -23,3 +23,11 @@ Date: 1. 11. 2019
     - Increased stack size bonus of stack inserters by x20
     - Added thumbnail
 ---------------------------------------------------------------------------------------------------
+Version: 0.0.5
+Date: 29. 11. 2020
+  Features:
+    - Adjusted dependency to work for 0.18.x
+    - Optimized boot time
+  Bugfixes
+    - Mod now considers fluid-recipes when calculating output and stack sizes.
+---------------------------------------------------------------------------------------------------
