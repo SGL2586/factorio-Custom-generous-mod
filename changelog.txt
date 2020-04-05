@@ -31,3 +31,16 @@ Date: 29. 11. 2020
   Bugfixes
     - Mod now considers fluid-recipes when calculating output and stack sizes.
 ---------------------------------------------------------------------------------------------------
+Version: 0.0.6
+Date: 09. 02. 2020
+  Features:
+    - FactorioExtended-Plus now works with this mod
+---------------------------------------------------------------------------------------------------
+Version: 0.1.0
+Date: 05. 04. 2020
+  Features:
+    - Added settings to modify what Super Generous Recipes edits and by how much
+    - Fixed 'Stack size can not be 0' error
+    - Mod now works for Bobs mods
+    - Mod now works for Krastorio 2
+---------------------------------------------------------------------------------------------------
