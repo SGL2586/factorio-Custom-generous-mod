@@ -1,6 +1,6 @@
 {
   "name": "super-generous-recipes",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "title": "Super Generous Recipes",
   "author": "M4pster",
   "description": "All recipe ingredient amounts set to 1. The more advanced items you craft the more you get out of them. StackSize is 50 times the output size.",

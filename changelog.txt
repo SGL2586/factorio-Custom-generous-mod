@@ -51,3 +51,8 @@ Date: 06. 04. 2020
     - Fixed 'super-generous-recipes/data-updates.lua:183: attempt to concatenate a nil value'
     - Added nil checks for debug logs
 ---------------------------------------------------------------------------------------------------
+Version: 0.1.2
+Date: 06. 04. 2020
+  Bugfixes
+    - Fixed 'stack_size' must be 1 when not-stackable is set.
+---------------------------------------------------------------------------------------------------

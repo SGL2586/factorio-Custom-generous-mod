@@ -175,7 +175,6 @@ function modifyIngredients (recipe)
 
 			-- assign total amount crafted
 			adjustRecipeOutput(recipe, item, totalIngredientTypes)
-			print(dump(get_recipe_name(recipe)) .. " = " .. totalIngredientTypes)
 		else
 			print("No recipe for " .. dump(recipe.result))
 		end
@@ -214,12 +213,33 @@ function adjustRequiredIngredientAmount(recipe)
 			ingredient[2] = amount
 		end
 	end
+
+	print(dump(get_recipe_name(recipe)) .. " ingredients = " .. amount)
+end
+
+function isItemStackable(item)
+	-- all grid items must be stack_size 1
+	if item["equipment_grid"] ~= nil then
+		return false
+	end
+
+	if item["flags"] ~= nil then
+		for index, value in ipairs(item["flags"]) do
+	        if value == "not-stackable" then
+	            return false
+	        end
+	    end
+    end
+
+    return true
 end
 
 function adjustItemStackSize(item, totalIngredientTypes)
-	if item["equipment_grid"] ~= nil then
-		return
-	end
+	--print("Processing stack_size: " .. dump(item))
+	if isItemStackable(item) == false then
+		print(item["name"] .. " is not stackable... skipping stack size!")
+        return
+    end
 
 	-- make sure we can edit the stack size
 	local canEdit = settings.startup["sgr-stacksize-edit"].value
@@ -234,11 +254,14 @@ function adjustItemStackSize(item, totalIngredientTypes)
 	end
 	
 	-- change stack size
-	item["stack_size"] = math.max(1, math.min(stack_size, 4294967295))
+	local stack_size = math.max(1, math.min(stack_size, 4294967295))
+	item["stack_size"] = stack_size
+
+	print(dump(item["name"]) .. " stack_size = " .. stack_size)
 end
 
 function adjustRecipeOutput(recipe, item, totalIngredientTypes)
-	if item["equipment_grid"] ~= nil then
+	if isItemStackable(item) == false then
 		return
 	end
 
@@ -261,7 +284,10 @@ function adjustRecipeOutput(recipe, item, totalIngredientTypes)
 
 
 	-- change amount and clamp to caps
-	recipe.result_count = math.max(1, math.min(amount, 65535))
+	local output = math.max(1, math.min(amount, 65535))
+	recipe.result_count = output
+
+	print(dump(get_recipe_name(recipe)) .. " output = " .. output)
 end
 
 -------------------------------------------
@@ -339,7 +365,7 @@ for i, recipe in pairs(data.raw.recipe) do
 	end
 end
 
-print("CACHED RECIPES: " .. dump(cached_recipes))
+--print("CACHED RECIPES: " .. dump(cached_recipes))
 print("CACHED ITEMS: " .. dump(cached_items))
 
 --
