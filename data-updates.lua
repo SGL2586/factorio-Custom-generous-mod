@@ -175,12 +175,12 @@ function modifyIngredients (recipe)
 
 			-- assign total amount crafted
 			adjustRecipeOutput(recipe, item, totalIngredientTypes)
-			print(get_recipe_name(recipe) .. " = " .. totalIngredientTypes)
+			print(dump(get_recipe_name(recipe)) .. " = " .. totalIngredientTypes)
 		else
-			print("No recipe for " .. recipe.result)
+			print("No recipe for " .. dump(recipe.result))
 		end
 	else
-		print("Skipping ingredient modification for " .. get_recipe_name(recipe))
+		print("Skipping ingredient modification for " .. dump(get_recipe_name(recipe)))
 	end
 
 	logIndents = logIndents - 1
@@ -278,12 +278,12 @@ function cacheRecipes()
 				if recipe.subgroup == 'fluid-recipes' and recipe.category == 'oil-processing' then
 					-- fluids
 					for j, result in pairs(recipe.results) do
-						print(result.name .. " " .. dump(recipe))
+						print(dump(result.name) .. " " .. dump(recipe))
 						cached_recipes[result.name] = recipe
 					end
 				else
 					-- other
-					print(recipe_name .. " " .. dump(recipe))
+					print(dump(recipe_name) .. " " .. dump(recipe))
 					cached_recipes[recipe_name] = recipe
 				end
 			else

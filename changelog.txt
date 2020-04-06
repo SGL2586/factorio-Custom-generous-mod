@@ -40,7 +40,14 @@ Version: 0.1.0
 Date: 05. 04. 2020
   Features:
     - Added settings to modify what Super Generous Recipes edits and by how much
-    - Fixed 'Stack size can not be 0' error
     - Mod now works for Bobs mods
     - Mod now works for Krastorio 2
+  Bugfixes
+    - Fixed 'Stack size can not be 0' error
+---------------------------------------------------------------------------------------------------
+Version: 0.1.1
+Date: 06. 04. 2020
+  Bugfixes
+    - Fixed 'super-generous-recipes/data-updates.lua:183: attempt to concatenate a nil value'
+    - Added nil checks for debug logs
 ---------------------------------------------------------------------------------------------------
