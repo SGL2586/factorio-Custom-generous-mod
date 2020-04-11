@@ -27,6 +27,8 @@ for i, force in pairs(game.forces) do
             reset_tech = true
           elseif effect.type == "inserter-stack-size-bonus" then
             reset_tech = true
+          elseif effect.type == "worker-robot-storage" then
+            reset_tech = true
           end
         end
       end

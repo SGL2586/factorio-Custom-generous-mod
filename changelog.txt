@@ -63,3 +63,13 @@ Date: 10. 04. 2020
   Bugfixes
     - Fixed small-electric-pole's output not being modified in Krastorio 2
 ---------------------------------------------------------------------------------------------------
+Version: 0.2.0
+Date: 12. 04. 2020
+  Features:
+    - Added Setting option to change recipe crafting time
+    - Added Setting option to change inserter stack size amount when researching
+    - Added Setting option to change stack inserter stack size amount when researching
+    - Added Setting option to change robot stack size amount when researching
+  Bugfixes
+    - Fixed output of recipes that are meant to output 0 but are modified to return more (Krastorio 2 - Crushing sand)
+---------------------------------------------------------------------------------------------------

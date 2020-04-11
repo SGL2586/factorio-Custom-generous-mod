@@ -5,9 +5,10 @@
 local cached_items = {}
 local cached_recipes = {}
 local cached_ingredient_counts = {}
+local cached_ingredient_depth = {}
 local processedRecipes = {}
 
-local enableLogs = true
+local enableLogs = false
 local logIndents = 0;
 
 function print(s)
@@ -82,6 +83,63 @@ function get_recipe_name(recipe)
 	end
 end
 
+function get_ingredient_name(ingredient)
+	local ingredient_name = nil
+	if ingredient["name"] ~= nil then
+		ingredient_name = ingredient["name"]
+	else
+		ingredient_name = ingredient[1]
+	end
+
+	return ingredient_name
+end
+
+function get_recipe_ingredients_parent(recipe)
+	if recipe.ingredients then
+		return recipe
+	elseif recipe.normal.ingredients then -- for 0.15 for normal and expensive recipes 
+		return recipe.normal 
+	end
+
+	return nil
+end
+
+
+function get_ingredient_depth(recipe)
+	local recipe_name = get_recipe_name(recipe)
+	print("Getting max depth: " .. dump(recipe_name) .. " " .. dump(recipe))
+
+	-- check if cached
+	local depth = cached_ingredient_depth[recipe_name]
+	if depth ~= nil then 
+		return depth
+	end
+
+	-- calculate
+	depth = 0
+	for i, ingredient in pairs(recipe.ingredients) do
+		local ingredient_name = get_ingredient_name(ingredient)
+		local ingredient_recipe = cached_recipes[ingredient_name] -- steel bar recipe
+		if ingredient_recipe then
+			if ingredient_recipe == recipe then
+				print("LOG: Recursive recipe " .. dump(recipe_name) .. "->" .. dump(ingredient_name))
+			else
+				local ingredient_parent = get_recipe_ingredients_parent(ingredient_recipe)
+				depth = math.max(depth, get_ingredient_depth(ingredient_parent) + 1)
+			end
+		end
+	end
+
+	-- cache
+	print("Calculated max depth: " .. dump(recipe_name) .. ": " .. dump(depth))
+	if recipe_name ~= nil then
+		cached_ingredient_depth[recipe_name] = depth
+	end
+
+	-- return
+	return depth
+end
+
 function get_total_ingredients_required (recipe)
 	-- flame ammo = crude oil + steel bar
 	-- steel bar = iron bar
@@ -93,31 +151,18 @@ function get_total_ingredients_required (recipe)
 	local total = cached_ingredient_counts[recipe_name]
 	if total == nil then 
 		-- calculate total ingredients
-		total = 0	
+		total = 0
 		for i, ingredient in pairs(recipe.ingredients) do
 			-- ingredient for recipe ( steel bar )
-			local ingredient_name = nil
-			if ingredient["name"] ~= nil then
-				ingredient_name = ingredient["name"]
-			else
-				ingredient_name = ingredient[1]
-			end
-
-
+			local ingredient_name = get_ingredient_name(ingredient)
 			local ingredient_recipe = cached_recipes[ingredient_name] -- steel bar recipe
 			if ingredient_recipe then
 
 				if ingredient_recipe == recipe then
 					print("LOG: Recursive recipe " .. dump(recipe_name) .. "->" .. dump(ingredient_name))
 				else
-					local d = nil
-					if ingredient_recipe.ingredients then
-						d = ingredient_recipe
-					elseif ingredient_recipe.normal.ingredients then -- for 0.15 for normal and expensive recipes 
-						d = ingredient_recipe.normal 
-					end
-
-					total = total + get_total_ingredients_required(d) + 1
+					local ingredient_parent = get_recipe_ingredients_parent(ingredient_recipe)
+					total = total + get_total_ingredients_required(ingredient_parent) + 1
 				end
 			else
 				print("LOG: Did not find recipe for ingredient " .. dump(ingredient_name) .. " for " .. dump(recipe_name))
@@ -187,24 +232,22 @@ function modifyIngredients (recipe)
 	-- change all ingredients to 1 if it's set in the settings
 	adjustRequiredIngredientAmount(recipe)
 
+	-- change crafting time if needed
+	adjustCraftingTime(recipe)
+
 	-- modify how many we get from the recipe 
 	local recipeResults = getRecipeResults(recipe);
 	if recipeResults ~= nil and recipe.ingredients then
-		-- get total ingredients needed to make this outputItem
-		local totalIngredientTypes = get_total_ingredients_required(recipe)
-
-
-		-- calculate total ingredients needed for each output
 		for i, recipeOutputItem in pairs(recipeResults) do
 			--print("- output: " .. dump(recipeOutputItem))
 			local recipeOutput = recipeOutputItem["output"]
 			local outputItem = cached_items[recipeOutputItem["name"]]
 			if outputItem then
 				-- assign how many of this outputItem we can keep in a single stack
-				adjustItemStackSize(outputItem, totalIngredientTypes)
+				adjustItemStackSize(outputItem, recipe)
 
 				-- assign total amount crafted
-				adjustRecipeOutput(recipe, recipeOutput, outputItem, totalIngredientTypes)
+				adjustRecipeOutput(recipe, recipeOutput, outputItem)
 			else
 				print("No recipe for " .. dump(outputItemName))
 			end
@@ -217,12 +260,8 @@ function modifyIngredients (recipe)
 end
 
 function processedRecipe(recipe)
-	local d = nil
-	if recipe.ingredients then
-		d = recipe
-	elseif recipe.normal.ingredients then -- for 0.15 for normal and expensive recipes 
-		d = recipe.normal 
-	end
+	-- get parent of the recipe that has the ingredients
+	local d = get_recipe_ingredients_parent(recipe)
 
 	-- modify recipe
 	modifyIngredients(d)
@@ -248,6 +287,35 @@ function adjustRequiredIngredientAmount(recipe)
 	print(dump(get_recipe_name(recipe)) .. " ingredients = " .. amount)
 end
 
+function adjustCraftingTime(recipe)
+	-- make sure we can edit the crafting time
+	local canEdit = settings.startup["sgr-time-edit"].value
+	if canEdit == false then
+		return
+	end
+
+	-- Get amount according to settings
+	local outputType = settings.startup["sgr-time-type"].value
+	local currentAmount = getRecipeCraftingTime(recipe)
+	local amount = currentAmount
+	if outputType == "total-required-ingredients" then
+		amount =  get_total_ingredients_required(recipe)
+	elseif outputType == "custom" then
+		amount = settings.startup["sgr-time-custom-amount"].value
+	elseif outputType == "max-recipe-depth" then
+		local ingredient_depth = get_ingredient_depth(recipe)
+		if ingredient_depth then
+			amount = ingredient_depth + 1
+		else
+			amount = 1
+		end
+	end
+
+	-- edit ingredient requirement amount
+	setRecipeCraftingTime(recipe, amount)
+	print(dump(get_recipe_name(recipe)) .. " crafting time = " .. amount)
+end
+
 function isItemStackable(item)
 	-- all grid items must be stack_size 1
 	if item["equipment_grid"] ~= nil then
@@ -265,7 +333,7 @@ function isItemStackable(item)
     return true
 end
 
-function adjustItemStackSize(item, totalIngredientTypes)
+function adjustItemStackSize(item, recipe)
 	--print("Processing stack_size: " .. dump(item))
 	if isItemStackable(item) == false then
 		print(item["name"] .. " is not stackable... skipping stack size!")
@@ -282,7 +350,7 @@ function adjustItemStackSize(item, totalIngredientTypes)
 	-- get stack size according to settings
 	local stack_size = settings.startup["sgr-stacksize"].value
 	if settings.startup["sgr-should-multiply-stacksize"].value then
-		stack_size = stack_size * totalIngredientTypes
+		stack_size = stack_size * get_total_ingredients_required(recipe)
 	end
 	
 	-- change stack size
@@ -308,6 +376,14 @@ function getRecipeOutputAmount(recipe, recipeOutput)
 	return 1
 end
 
+function getRecipeCraftingTime(recipe)
+	return recipe.energy_required
+end
+
+function setRecipeCraftingTime(recipe, amount)
+	recipe.energy_required = math.max(amount, 0.1)
+end
+
 function setRecipeOutputAmount(recipe, recipeOutput, amount)
 	if recipeOutput.result_count ~= nil then
 		recipeOutput.result_count = amount
@@ -321,7 +397,7 @@ function setRecipeOutputAmount(recipe, recipeOutput, amount)
 	end
 end
 
-function adjustRecipeOutput(recipe, recipeOutput, item, totalIngredientTypes)
+function adjustRecipeOutput(recipe, recipeOutput, item)
 	if isItemStackable(item) == false then
 		return
 	end
@@ -336,9 +412,15 @@ function adjustRecipeOutput(recipe, recipeOutput, item, totalIngredientTypes)
 	-- Get amount according to settings
 	local outputType = settings.startup["sgr-output-type"].value
 	local currentAmount = getRecipeOutputAmount(recipe, recipeOutput)
+	if currentAmount == 0 then
+		print("[adjustRecipeOutput] output set to 0... skipping in case this item is not meant to be obtained")
+		return
+	end
+
+
 	local amount = currentAmount
 	if outputType == "total-required-ingredients" then
-		amount = totalIngredientTypes
+		amount = get_total_ingredients_required(recipe)
 	elseif outputType == "stack-size" then
 		amount = item["stack_size"]
 	elseif outputType == "custom" then
@@ -440,16 +522,29 @@ end
 --print("CACHED RECIPES: " .. dump(cached_recipes))
 --print("CACHED ITEMS: " .. dump(cached_items))
 
+--print("RESEARCH: " .. dump(data.raw.technology))
+
 --
 -- Change research
 --
-for i, tech in pairs(data.raw.technology) do
-	if tech.effects ~= nil then
-		for j, effect in pairs(tech.effects) do
-			if effect.type == "stack-inserter-capacity-bonus" then
-				effect.modifier = effect.modifier * 20
-			elseif effect.type == "inserter-stack-size-bonus" then
-				effect.modifier = effect.modifier * 50
+
+
+local canEditStackSize = settings.startup["sgr-stacksize-edit"].value
+if canEditStackSize then
+	for i, tech in pairs(data.raw.technology) do
+		if tech.effects ~= nil then
+			for j, effect in pairs(tech.effects) do
+					-- increase inserter stack size bonus
+					if effect.type == "stack-inserter-capacity-bonus" then
+						effect.modifier = effect.modifier * settings.startup["sgr-stacksize-inserter"].value
+					elseif effect.type == "inserter-stack-size-bonus" then
+						effect.modifier = effect.modifier * settings.startup["sgr-stacksize-stack-inserter"].value
+
+					-- robot stack size bonus
+					else if effect.type == "worker-robot-storage" then
+						effect.modifier = effect.modifier * settings.startup["sgr-stacksize-robot"].value
+					end
+				end
 			end
 		end
 	end

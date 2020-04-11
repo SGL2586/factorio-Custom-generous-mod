@@ -22,6 +22,27 @@ data:extend(
 		order = "stacksize_b"
 	},
 	{
+		type = "int-setting",
+		name = "sgr-stacksize-robot",
+		setting_type = "startup",
+		default_value = 50,
+		order = "stacksize_c"
+	},
+	{
+		type = "int-setting",
+		name = "sgr-stacksize-inserter",
+		setting_type = "startup",
+		default_value = 20,
+		order = "stacksize_d"
+	},
+	{
+		type = "int-setting",
+		name = "sgr-stacksize-stack-inserter",
+		setting_type = "startup",
+		default_value = 50,
+		order = "stacksize_e"
+	},
+	{
 		type = "bool-setting",
 		name = "sgr-output-edit",
 		setting_type = "startup",
@@ -65,5 +86,28 @@ data:extend(
 	    setting_type = "startup",
         default_value = 1,
 		order = "requirements_b"
-	}
+	},
+	{
+		type = "bool-setting",
+		name = "sgr-time-edit",
+		setting_type = "startup",
+		default_value = false,
+		order = "time_a"
+	},
+	{
+	    type = "string-setting",
+	    name = "sgr-time-type",
+	    setting_type = "startup",
+        default_value = "max-recipe-depth",
+        allowed_values = {"custom", "max-recipe-depth", "total-required-ingredients"},
+		order = "time_b"
+	},
+	{
+	    type = "double-setting",
+	    name = "sgr-time-custom-amount",
+	    setting_type = "startup",
+        default_value = 1,
+        minimum_value = 0.1,
+		order = "time_c",
+	},
 })
