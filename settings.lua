@@ -46,6 +46,13 @@ data:extend(
 		order = "output_c",
 	},
 	{
+	    type = "bool-setting",
+	    name = "sgr-output-use-max-default",
+	    setting_type = "startup",
+		default_value = true,
+		order = "output_d"
+	},
+	{
 		type = "bool-setting",
 		name = "sgr-requirements-edit",
 		setting_type = "startup",

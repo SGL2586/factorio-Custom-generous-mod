@@ -56,3 +56,10 @@ Date: 06. 04. 2020
   Bugfixes
     - Fixed 'stack_size' must be 1 when not-stackable is set.
 ---------------------------------------------------------------------------------------------------
+Version: 0.1.3
+Date: 10. 04. 2020
+  Features:
+    - Added setting to use default output value for recipes if it's higher than what's calculated.
+  Bugfixes
+    - Fixed small-electric-pole's output not being modified in Krastorio 2
+---------------------------------------------------------------------------------------------------
