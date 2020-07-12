@@ -23,9 +23,7 @@ for i, force in pairs(game.forces) do
     for j, tech in pairs(force.technologies) do
       if tech.effects ~= nil then
         for j, effect in pairs(tech.effects) do
-          if effect.type == "stack-inserter-capacity-bonus" then
-            reset_tech = true
-          elseif effect.type == "inserter-stack-size-bonus" then
+          if effect.type == "worker-robot-storage" then
             reset_tech = true
           end
         end

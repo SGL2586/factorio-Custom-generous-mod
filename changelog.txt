@@ -73,3 +73,11 @@ Date: 12. 04. 2020
   Bugfixes
     - Fixed output of recipes that are meant to output 0 but are modified to return more (Krastorio 2 - Crushing sand)
 ---------------------------------------------------------------------------------------------------
+Version: 0.3.0
+Date: 12. 07. 2020
+  Features:
+    - Added Max Recipe Uses output setting option
+  Bugfixes
+    - Fixed Error stopping the mod working for angels mod
+    - Fixed Error stopping the mod working for natural evolutions mod
+---------------------------------------------------------------------------------------------------

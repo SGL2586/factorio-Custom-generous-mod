@@ -6,6 +6,7 @@ local cached_items = {}
 local cached_recipes = {}
 local cached_ingredient_counts = {}
 local cached_ingredient_depth = {}
+local cached_recipe_uses = {}
 local processedRecipes = {}
 
 local enableLogs = false
@@ -41,7 +42,7 @@ function dump(o)
 		local s = '{'
 		local items_left = tablelength(o)
 		for k,v in pairs(o) do
-			k = '"' .. k .. '"'
+			k = '"' .. dump(k) .. '"'
 
 			v_string = dump(v)
 			if type(v) ~= 'table' and type(v) ~= 'number' and type(v) ~= 'boolean' then
@@ -94,20 +95,29 @@ function get_ingredient_name(ingredient)
 	return ingredient_name
 end
 
-function get_recipe_ingredients_parent(recipe)
+function get_recipe_ingredient_parent(recipe)
 	if recipe.ingredients then
 		return recipe
-	elseif recipe.normal.ingredients then -- for 0.15 for normal and expensive recipes 
-		return recipe.normal 
+	elseif recipe.normal then -- for 0.15 for normal and expensive recipes 
+		return recipe.normal
 	end
 
 	return nil
 end
 
 
-function get_ingredient_depth(recipe)
+function get_recipe_ingredients(recipe)
+	local ingredient_parent = get_recipe_ingredient_parent(recipe)
+	if ingredient_parent ~= nil then
+		return ingredient_parent.ingredients
+	end
+
+	return nil
+end
+
+
+function get_ingredient_depth(recipe, optional_recipes_being_calculated)
 	local recipe_name = get_recipe_name(recipe)
-	print("Getting max depth: " .. dump(recipe_name) .. " " .. dump(recipe))
 
 	-- check if cached
 	local depth = cached_ingredient_depth[recipe_name]
@@ -115,17 +125,84 @@ function get_ingredient_depth(recipe)
 		return depth
 	end
 
+	-- calculate and cache
+	--print("get_ingredient_depth: " .. dump(optional_recipes_being_calculated))
+	return calculate_ingredient_depth(recipe, optional_recipes_being_calculated or {})
+end
+
+function get_total_recipies_using_this_recipe(recipe, optional_recipes_being_calculated)
+	local recipe_name = get_recipe_name(recipe)
+
+	-- get from cache
+	local uses = cached_recipe_uses[recipe_name]
+	if uses ~= nil then 
+		return uses
+	end
+
+	-- calculate
+	print("Calculating calculate_recipes_uses: " .. dump(recipe_name) .. " " .. dump(recipe))
+	logIndents = logIndents + 1
+	local uses = calculate_recipes_uses(recipe, optional_recipes_being_calculated or {})
+	logIndents = logIndents - 1
+
+	-- cache
+	print("Calculated calculate_recipes_uses: " .. dump(recipe_name) .. ": " .. dump(uses))
+	if recipe_name ~= nil then
+		local cached = cached_recipe_uses[recipe_name]
+		if cached ~= nil then
+			cached_recipe_uses[recipe_name] = math.max(uses, cached)
+		else
+			cached_recipe_uses[recipe_name] = uses
+		end
+	end
+
+	return uses
+end
+
+function calculate_recipes_uses(recipe, recipes_tried)
+	local recipe_name = get_recipe_name(recipe)
+	recipes_tried[recipe] = true
+
+	-- calculate
+	local uses = 0
+	for i, r in pairs(cached_recipes) do
+		if r ~= nil then
+			local r_name = get_recipe_name(r)
+			if recipes_tried[r] == nil then
+				local recipe_ingredients = get_recipe_ingredients(r)
+				for i, ingredient in pairs(recipe_ingredients) do
+					local ingredient_name = get_ingredient_name(ingredient)
+					if ingredient_name == recipe_name then
+						local ingredient_depth = get_total_recipies_using_this_recipe(r, recipes_tried)
+						uses = uses + ingredient_depth + 1
+						print(dump(recipe_name) .. " used by: " .. dump(r_name) .. " now " .. dump(uses))
+					end
+				end
+			end
+		end
+	end
+
+	-- return
+	return math.max(uses, 1)
+end
+
+function calculate_ingredient_depth(recipe, recipes_tried)
+	local recipe_name = get_recipe_name(recipe)
+	print("Calculating calculate_ingredient_depth: " .. dump(recipe_name) .. " " .. dump(recipe))
+	recipes_tried[recipe] = true
+
 	-- calculate
 	depth = 0
-	for i, ingredient in pairs(recipe.ingredients) do
+	local recipe_ingredients = get_recipe_ingredients(recipe)
+	print("Ingredients: " .. dump(recipe_ingredients))
+	for i, ingredient in pairs(recipe_ingredients) do
 		local ingredient_name = get_ingredient_name(ingredient)
 		local ingredient_recipe = cached_recipes[ingredient_name] -- steel bar recipe
 		if ingredient_recipe then
-			if ingredient_recipe == recipe then
+			if recipes_tried[ingredient_recipe] ~= nil then
 				print("LOG: Recursive recipe " .. dump(recipe_name) .. "->" .. dump(ingredient_name))
 			else
-				local ingredient_parent = get_recipe_ingredients_parent(ingredient_recipe)
-				depth = math.max(depth, get_ingredient_depth(ingredient_parent) + 1)
+				depth = math.max(depth, get_ingredient_depth(ingredient_recipe, recipes_tried) + 1)
 			end
 		end
 	end
@@ -137,53 +214,67 @@ function get_ingredient_depth(recipe)
 	end
 
 	-- return
-	return depth
+	return math.max(depth, 1)
 end
 
-function get_total_ingredients_required (recipe)
-	-- flame ammo = crude oil + steel bar
-	-- steel bar = iron bar
+--- get_total_ingredients_required
+-- Gets the total amount of ingredient types required to make this recipe throguh the entire tree
+-- @param recipe The recipe we want to get the amount of
+-- @param[opt] Used for calculating the amount if it's unknown.
+-- @return Total amount required
+function get_total_ingredients_required (recipe, optional_recipes_being_calculated)
 	local recipe_name = get_recipe_name(recipe)
-	print("Getting total ingredients for: " .. dump(recipe_name) .. " " .. dump(recipe))
-	logIndents = logIndents + 1
 
 	-- get from cache if we can
 	local total = cached_ingredient_counts[recipe_name]
-	if total == nil then 
-		-- calculate total ingredients
-		total = 0
-		for i, ingredient in pairs(recipe.ingredients) do
-			-- ingredient for recipe ( steel bar )
-			local ingredient_name = get_ingredient_name(ingredient)
-			local ingredient_recipe = cached_recipes[ingredient_name] -- steel bar recipe
-			if ingredient_recipe then
-
-				if ingredient_recipe == recipe then
-					print("LOG: Recursive recipe " .. dump(recipe_name) .. "->" .. dump(ingredient_name))
-				else
-					local ingredient_parent = get_recipe_ingredients_parent(ingredient_recipe)
-					total = total + get_total_ingredients_required(ingredient_parent) + 1
-				end
-			else
-				print("LOG: Did not find recipe for ingredient " .. dump(ingredient_name) .. " for " .. dump(recipe_name))
-				total = total + 1
-			end
-		end
-
-		-- cache for next query
-		if recipe_name ~= nil then
-			cached_ingredient_counts[recipe_name] = total
-		else
-			print("No name for recipe to cache ingredient count: " .. dump(recipe))
-		end
-	else
-		print("Using cached cached_ingredient_count for " .. dump(recipe_name))
+	if total ~= nil then 
+		return total
 	end
 
-	print(dump(recipe_name) .. " total ingredients: " .. total)
+	-- calculate 
+	return calculate_total_ingredients(recipe, optional_recipes_being_calculated or {})
+end
+
+function calculate_total_ingredients(recipe, recipes_tried)
+	-- flame ammo = crude oil + steel bar
+	-- steel bar = iron bar
+	local recipe_name = get_recipe_name(recipe)
+	print("Calculating total ingredients for: " .. dump(recipe_name) .. " " .. dump(recipe))
+	recipes_tried[recipe] = true
+	logIndents = logIndents + 1
+
+	-- calculate total ingredients
+	total = 0
+	local recipe_ingredients = get_recipe_ingredients(recipe)
+	for i, ingredient in pairs(recipe_ingredients) do
+		-- ingredient for recipe ( steel bar )
+		local ingredient_name = get_ingredient_name(ingredient)
+		local ingredient_recipe = cached_recipes[ingredient_name] -- steel bar recipe
+		if ingredient_recipe then
+			if recipes_tried[ingredient_recipe] ~= nil then
+				-- this recipe is trying to get the recipe that another relies on. Just ignore it.
+				print("LOG: Recursive recipe " .. dump(recipe_name) .. "->" .. dump(ingredient_name))
+			else 
+				-- not calculated yet
+				total = total + calculate_total_ingredients(ingredient_recipe, recipes_tried) + 1
+			end
+		else
+			print("LOG: Did not find recipe for ingredient " .. dump(ingredient_name) .. " for " .. dump(recipe_name))
+			total = total + 1
+		end
+	end
+
+	-- cache for next query
+	if recipe_name ~= nil then
+		cached_ingredient_counts[recipe_name] = total
+	else
+		print("No name for recipe to cache ingredient count: " .. dump(recipe))
+	end
+
+
+	print(dump(recipe_name) .. " calculated ingredients: " .. total)
 	logIndents = logIndents - 1
 
-	-- return at least 1
 	return math.max(total, 1)
 end
 
@@ -195,38 +286,45 @@ end
 -- returns the name of the recipe output as well as the original table reference
 -- returns {name: "x", output: {...}}
 function getRecipeResults(recipe)
-	if recipe.result ~= nil then
-		local result = {}
-		result[1] = {name=recipe.result, output=recipe}
+	local ingredient_parent = get_recipe_ingredient_parent(recipe)
+	logIndents = logIndents + 1
 
-		print("Recipe result: " .. dump(result))
+	if ingredient_parent.result ~= nil then
+		local result = {}
+		result[1] = {name=ingredient_parent.result, output=recipe}
+
+		--print("Recipe result: " .. dump(result))
+		logIndents = logIndents - 1
 		return result
-	elseif recipe.results then
-		if next(recipe.results) ~= nil then
-			print("Recipe result parsing: " .. dump(recipe.results))
+	elseif ingredient_parent.results then
+		if next(ingredient_parent.results) ~= nil then
+			--print("Recipe result parsing: " .. dump(ingredient_parent.results))
 			local resultData = {}
-			for i, result in pairs(recipe.results) do
+			for i, result in pairs(ingredient_parent.results) do
 				local name = result["name"] or result
 				resultData[i] = {name=name, output=result}
 			end
 
-			print("Recipe results: " .. dump(resultData))
+			--print("Recipe results: " .. dump(resultData))
+			logIndents = logIndents - 1
 			return resultData
 		end
 	end
 
+	logIndents = logIndents - 1
 	return nil
 end
 
 -- Set all amount of ingredients to 1
 -- Set total output to total amount of ingredients required
 -- Set stack_size to total output * 50
-function modifyIngredients (recipe)
+function processRecipe (recipe)
 	if recipe == nil then
 		return
 	end
 
-	print("Modifying Recipe: " .. dump(recipe))
+	local recipe_name = get_recipe_name(recipe)
+	print("Processing Recipe: " .. dump(recipe_name) .. " " .. dump(recipe))
 	logIndents = logIndents + 1
 
 	-- change all ingredients to 1 if it's set in the settings
@@ -237,34 +335,31 @@ function modifyIngredients (recipe)
 
 	-- modify how many we get from the recipe 
 	local recipeResults = getRecipeResults(recipe);
-	if recipeResults ~= nil and recipe.ingredients then
-		for i, recipeOutputItem in pairs(recipeResults) do
-			--print("- output: " .. dump(recipeOutputItem))
-			local recipeOutput = recipeOutputItem["output"]
-			local outputItem = cached_items[recipeOutputItem["name"]]
-			if outputItem then
-				-- assign how many of this outputItem we can keep in a single stack
-				adjustItemStackSize(outputItem, recipe)
+	if recipeResults ~= nil then
+		local recipe_ingredients = get_recipe_ingredients(recipe)
+		if recipe_ingredients ~= nil then
+			for i, recipeOutputItem in pairs(recipeResults) do
+				--print("- output: " .. dump(recipeOutputItem))
+				local recipeOutput = recipeOutputItem["output"]
+				local outputItem = cached_items[recipeOutputItem["name"]]
+				if outputItem then
+					-- assign how many of this outputItem we can keep in a single stack
+					adjustItemStackSize(outputItem, recipe)
 
-				-- assign total amount crafted
-				adjustRecipeOutput(recipe, recipeOutput, outputItem)
-			else
-				print("No recipe for " .. dump(outputItemName))
+					-- assign total amount crafted
+					adjustRecipeOutput(recipe, recipeOutput, outputItem)
+				else
+					print("No recipe for " .. dump(outputItemName))
+				end
 			end
+		else
+			print("Skipping ingredient modification for " .. dump(recipe_name) .. " because there are no ingredients.")
 		end
 	else
-		print("Skipping ingredient modification for " .. dump(get_recipe_name(recipe)) .. " because there is no result or ingredients.")
+		print("Skipping ingredient modification for " .. dump(recipe_name) .. " because there is no result.")
 	end
 
 	logIndents = logIndents - 1
-end
-
-function processedRecipe(recipe)
-	-- get parent of the recipe that has the ingredients
-	local d = get_recipe_ingredients_parent(recipe)
-
-	-- modify recipe
-	modifyIngredients(d)
 end
 
 function adjustRequiredIngredientAmount(recipe)
@@ -276,7 +371,8 @@ function adjustRequiredIngredientAmount(recipe)
 
 	-- edit ingredient requirement amount
 	local amount = settings.startup["sgr-requirement-amount"].value;
-	for i, ingredient in pairs(recipe.ingredients) do
+	local recipe_ingredients = get_recipe_ingredients(recipe)
+	for i, ingredient in pairs(recipe_ingredients) do
 		if ingredient["amount"] ~= nil then
 			ingredient["amount"] = amount
 		else
@@ -309,6 +405,8 @@ function adjustCraftingTime(recipe)
 		else
 			amount = 1
 		end
+	elseif outputType == "max-recipe-uses" then
+		amount = get_total_recipies_using_this_recipe(recipe)
 	end
 
 	-- edit ingredient requirement amount
@@ -350,7 +448,7 @@ function adjustItemStackSize(item, recipe)
 	-- get stack size according to settings
 	local stack_size = settings.startup["sgr-stacksize"].value
 	if settings.startup["sgr-should-multiply-stacksize"].value then
-		stack_size = stack_size * get_total_ingredients_required(recipe)
+		stack_size = stack_size * math.max(1, get_total_ingredients_required(recipe))
 	end
 	
 	-- change stack size
@@ -385,15 +483,33 @@ function setRecipeCraftingTime(recipe, amount)
 end
 
 function setRecipeOutputAmount(recipe, recipeOutput, amount)
-	if recipeOutput.result_count ~= nil then
-		recipeOutput.result_count = amount
-	elseif recipeOutput.amount ~= nil then
-		recipeOutput.amount = amount
-	elseif recipe.amount ~= nil then
-		recipe.amount = amount
+	local ingredient_parent = get_recipe_ingredient_parent(recipe)
+	local isSet = false
+
+	if ingredient_parent.result_count ~= nil then
+		ingredient_parent.result_count = amount
+		isSet = true
+	end
+
+	local ingredient_buckets = nil
+	if ingredient_parent.results then
+		ingredient_buckets = ingredient_parent.results
 	else
-		-- fallback
-		recipe.result_count = amount
+		ingredient_buckets = {}
+		ingredient_buckets[1] = ingredient_parent
+	end
+
+	for i,bucket in ipairs(ingredient_buckets) do
+		if bucket.amount ~= nil then
+			bucket.amount = amount
+			isSet = true
+		end
+	end
+	
+	
+	-- fallback
+	if isSet == false then
+		ingredient_parent.result_count = amount
 	end
 end
 
@@ -425,6 +541,8 @@ function adjustRecipeOutput(recipe, recipeOutput, item)
 		amount = item["stack_size"]
 	elseif outputType == "custom" then
 		amount = settings.startup["sgr-output-custom-amount"].value
+	elseif outputType == "max-recipe-uses" then
+		amount = get_total_recipies_using_this_recipe(recipe)
 	end
 
 	-- set the highest amount if we are allowed to
@@ -438,10 +556,8 @@ function adjustRecipeOutput(recipe, recipeOutput, item)
 
 	-- change amount and clamp to caps
 	local output = math.max(1, math.min(amount, 65535))
-	print("[adjustRecipeOutput] Editing output of " .. dump(recipe))
 	setRecipeOutputAmount(recipe, recipeOutput, output)
-
-	print(dump(get_recipe_name(recipe)) .. " output = " .. output)
+	print("[adjustRecipeOutput] Output set to " .. dump(output) .. " of " .. dump(recipe))
 end
 
 -------------------------------------------
@@ -454,23 +570,28 @@ function cacheRecipes()
 		if recipe.type == "recipe" then
 			local recipe_name = get_recipe_name(recipe)
 			if recipe_name then
-				print(dump(recipe.subgroup) .. " " .. dump(recipe.category))
+				--print(dump(recipe.subgroup) .. " " .. dump(recipe.category) .. " " .. dump(recipe.results))
 				if recipe.subgroup == 'fluid-recipes' and recipe.category == 'oil-processing' then
 					-- fluids
-					for j, result in pairs(recipe.results) do
-						print(dump(result.name) .. " " .. dump(recipe))
-						cached_recipes[result.name] = recipe
+					if recipe.result ~= nil then
+						--print(dump(recipe.result.name) .. " " .. dump(recipe))
+						cached_recipes[recipe.result.name] = recipe
+					elseif recipe.results ~= nil then
+						for j, result in pairs(recipe.results) do
+							--print(dump(result.name) .. " " .. dump(recipe))
+							cached_recipes[result.name] = recipe
+						end
 					end
 				else
 					-- other
-					print(dump(recipe_name) .. " " .. dump(recipe))
+					--print(dump(recipe_name) .. " " .. dump(recipe))
 					cached_recipes[recipe_name] = recipe
 				end
 			else
-				print("Skipped Recipe: " .. dump(recipe))
+				--print("Skipped Recipe: " .. dump(recipe))
 			end
 		else
-			print("Skipped Recipe: " .. dump(recipe))
+			--print("Skipped Recipe: " .. dump(recipe))
 		end
 	end
 end
@@ -504,22 +625,22 @@ cacheItems(data.raw)
 --print(dump(data.raw.recipe))
 
 for i, recipe in pairs(data.raw.recipe) do
-	local processed = processedRecipes[recipe.name]
+	local recipe_name = get_recipe_name(recipe)
+	local processed = processedRecipes[recipe]
 	if recipe.type == "recipe" and processed ~= true then
-		processedRecipe(recipe)
+		processRecipe(recipe)
 
-		recipe_name = recipe.name
-		if recipe.subgroup == 'fluid-recipes' and recipe.category == 'oil-processing' then
-			for j, result in pairs(recipe.results) do
-				processedRecipes[result.name] = true
-			end
-		else
-			processedRecipes[recipe.name] = true
-		end
+		---if recipe.subgroup == 'fluid-recipes' and recipe.category == 'oil-processing' then
+		---	for j, result in pairs(recipe.results) do
+		---		processedRecipes[recipe_name] = true
+		---	end
+		---else
+		processedRecipes[recipe] = true
+		---end
 	end
 end
 
---print("CACHED RECIPES: " .. dump(cached_recipes))
+print("CACHED RECIPES: " .. dump(cached_recipes))
 --print("CACHED ITEMS: " .. dump(cached_items))
 
 --print("RESEARCH: " .. dump(data.raw.technology))

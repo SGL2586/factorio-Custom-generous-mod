@@ -54,7 +54,7 @@ data:extend(
 	    name = "sgr-output-type",
 	    setting_type = "startup",
         default_value = "total-required-ingredients",
-        allowed_values = {"custom", "total-required-ingredients", "stack-size"},
+        allowed_values = {"custom", "total-required-ingredients", "stack-size", "max-recipe-uses"},
 		order = "output_b"
 	},
 	{
