@@ -81,3 +81,12 @@ Date: 12. 07. 2020
     - Fixed Error stopping the mod working for angels mod
     - Fixed Error stopping the mod working for natural evolutions mod
 ---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+Version: 0.3.1
+Date: 06. 08. 2020
+  Features:
+    - Added Max Recipe Uses output setting option
+  Bugfixes
+    - Values in options can no longer be set to 0
+    - Fixed change recipe time not changing for some recipes.
+---------------------------------------------------------------------------------------------------

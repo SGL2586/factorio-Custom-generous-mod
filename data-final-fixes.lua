@@ -9,7 +9,7 @@ local cached_ingredient_depth = {}
 local cached_recipe_uses = {}
 local processedRecipes = {}
 
-local enableLogs = false
+local enableLogs = true
 local logIndents = 0;
 
 function print(s)
@@ -411,7 +411,7 @@ function adjustCraftingTime(recipe)
 
 	-- edit ingredient requirement amount
 	setRecipeCraftingTime(recipe, amount)
-	print(dump(get_recipe_name(recipe)) .. " crafting time = " .. amount)
+	print(dump(get_recipe_name(recipe)) .. " crafting time = " .. amount .. " " .. dump(recipe))
 end
 
 function isItemStackable(item)
@@ -479,7 +479,15 @@ function getRecipeCraftingTime(recipe)
 end
 
 function setRecipeCraftingTime(recipe, amount)
-	recipe.energy_required = math.max(amount, 0.1)
+	local t = math.max(amount, 0.1)
+
+	if recipe.normal then
+		recipe.normal.energy_required = t
+	end
+
+	if recipe.energy_required then
+		recipe.energy_required = t
+	end
 end
 
 function setRecipeOutputAmount(recipe, recipeOutput, amount)
