@@ -1,16 +1,49 @@
 -----------------------------
--- Helper functions
+-- Setup
 -----------------------------
 
-local cached_items = {}
+-- cache
+local cached_items = {} -- https://wiki.factorio.com/Data.raw#item
 local cached_recipes = {}
 local cached_ingredient_counts = {}
 local cached_ingredient_depth = {}
 local cached_recipe_uses = {}
 local processedRecipes = {}
 
-local enableLogs = true
+-- settings
+local outputItemEditingEnabled = settings.startup["sgr-output-item-edit"].value
+local outputItemCalculationType = settings.startup["sgr-output-item-type"].value
+local outputItemCustomAmount = settings.startup["sgr-output-item-custom-amount"].value
+local outputFluidEditingEnabled = settings.startup["sgr-output-fluid-edit"].value
+local outputFluidCalculationType = settings.startup["sgr-output-fluid-type"].value
+local outputFluidCustomAmount = settings.startup["sgr-output-fluid-custom-amount"].value
+
+local requirementEditingEnabled = settings.startup["sgr-requirements-edit"].value
+local requirementCustomItemAmount = settings.startup["sgr-requirement-item-amount"].value;
+local requirementCustomFluidAmount = settings.startup["sgr-requirement-fluid-amount"].value;
+
+local timeEditingEnabled = settings.startup["sgr-time-edit"].value
+local timeCalculationType = settings.startup["sgr-time-type"].value
+local timeCustomAmount = settings.startup["sgr-time-custom-amount"].value
+
+local stackSizeEditingEnabled = settings.startup["sgr-stacksize-item-edit"].value
+local stackSizeItemAmount = settings.startup["sgr-stacksize-item"].value
+local stackSizeMultiplyByTotalIngredients = settings.startup["sgr-should-multiply-stacksize"].value
+
+local researchRobotEditingEnabled = settings.startup["sgr-stacksize-robot-stacksize-research-edit"].value
+local researchRobotStacksizeBonus = settings.startup["sgr-stacksize-robot"].value
+
+local researchInserterEditingEnabled = settings.startup["sgr-stacksize-inserter-stacksize-research-edit"].value
+local researchInserterStacksizeBonus = settings.startup["sgr-stacksize-inserter"].value
+local researchStackInserterStacksizeBonus = settings.startup["sgr-stacksize-stack-inserter"].value
+
+-- debug
+local enableLogs = false
 local logIndents = 0;
+
+-----------------------------
+-- Helper functions
+-----------------------------
 
 function print(s)
 	if enableLogs then
@@ -85,14 +118,35 @@ function get_recipe_name(recipe)
 end
 
 function get_ingredient_name(ingredient)
-	local ingredient_name = nil
-	if ingredient["name"] ~= nil then
-		ingredient_name = ingredient["name"]
-	else
-		ingredient_name = ingredient[1]
+	local ingredient_name = ingredient["name"]
+	if ingredient_name ~= nil then
+		return ingredient_name
 	end
 
-	return ingredient_name
+	if type(ingredient[1]) == "string" then
+		return ingredient[1]
+	else
+		return ingredient[2]
+	end
+end
+
+function get_ingredient_type(ingredient)
+	local ingredient_type = ingredient["type"]
+	if ingredient_type ~= nil then
+		return ingredient_type
+	end
+
+	local ingredient_name = get_ingredient_name(ingredient)
+	if ingredient_name == nil then
+		return nil
+	end
+
+	local ingredient_item = cached_items[ingredient_name]
+	if ingredient_item == nil then
+		return nil
+	end
+
+	return ingredient_item["type"]
 end
 
 function get_recipe_ingredient_parent(recipe)
@@ -315,6 +369,31 @@ function getRecipeResults(recipe)
 	return nil
 end
 
+function getRecipeOutputItemName(recipeOutputItem)
+	local recipeOutput = recipeOutputItem["output"]
+	if recipeOutput ~= nil then
+		if type(recipeOutput) == 'table' then
+			local outputName = recipeOutput["name"]
+			if outputName ~= nil then
+				return outputName
+			else
+				return recipeOutput[1]
+			end
+		else
+			return recipeOutput
+		end
+	end
+
+
+	local outputItem = cached_items[recipeOutputItem["name"]]
+	if outputItem ~= nil then
+		return outputItem
+	end
+
+	print("Could not find outputItemName for " .. dump(recipeOutputItem))
+	return nil
+end
+
 -- Set all amount of ingredients to 1
 -- Set total output to total amount of ingredients required
 -- Set stack_size to total output * 50
@@ -340,16 +419,19 @@ function processRecipe (recipe)
 		if recipe_ingredients ~= nil then
 			for i, recipeOutputItem in pairs(recipeResults) do
 				--print("- output: " .. dump(recipeOutputItem))
+				local recipeOutputName = getRecipeOutputItemName(recipeOutputItem)
 				local recipeOutput = recipeOutputItem["output"]
-				local outputItem = cached_items[recipeOutputItem["name"]]
+				local outputItem = cached_items[recipeOutputName]
 				if outputItem then
+					print("[processRecipe] Got recipe for " .. dump(recipeOutputName) .. " - " .. dump(recipeOutputItem["name"]) .. " = " .. dump(recipeOutputItem))
+
 					-- assign how many of this outputItem we can keep in a single stack
 					adjustItemStackSize(outputItem, recipe)
 
 					-- assign total amount crafted
 					adjustRecipeOutput(recipe, recipeOutput, outputItem)
 				else
-					print("No recipe for " .. dump(outputItemName))
+					print("[processRecipe] No recipe for " .. dump(recipeOutputName) .. " - " .. dump(recipeOutput[1]) .. " = " .. dump(recipeOutputItem))
 				end
 			end
 		else
@@ -364,40 +446,64 @@ end
 
 function adjustRequiredIngredientAmount(recipe)
 	-- make sure we can edit the requirement amount
-	local canEdit = settings.startup["sgr-requirements-edit"].value
+	local canEdit = requirementEditingEnabled
 	if canEdit == false then
 		return
 	end
 
+
+	print("[adjustRequiredIngredientAmount] Adjusted Requirement for: " .. dump(get_recipe_name(recipe)))
+	logIndents = logIndents + 1
+
 	-- edit ingredient requirement amount
-	local amount = settings.startup["sgr-requirement-amount"].value;
+	local itemAmount = requirementCustomItemAmount
+	local fluidAmount = requirementCustomFluidAmount
 	local recipe_ingredients = get_recipe_ingredients(recipe)
 	for i, ingredient in pairs(recipe_ingredients) do
-		if ingredient["amount"] ~= nil then
-			ingredient["amount"] = amount
-		else
-			ingredient[2] = amount
+		print("[adjustRequiredIngredientAmount] Adjusting ingredient " .. dump(ingredient))
+		-- true  = {"1":{"1":"stone-brick"}}
+		-- false = {"1":{"name":"stone-brick", "amount":5}}
+		local isSimpleTable = ingredient["name"] == nil -- {"1":{"1":"stone-brick"}}
+		local name = get_ingredient_name(ingredient)
+		local ingredientType = get_ingredient_type(ingredient)
+
+
+		local amount = requirementCustomItemAmount
+		if ingredient["type"] == "fluid" then
+			amount = requirementCustomFluidAmount
 		end
+
+		if isSimpleTable then
+			if type(ingredient[1]) == "string" then
+				ingredient[2] = amount
+			else
+				ingredient[1] = amount
+			end
+		else
+			ingredient["amount"] = amount
+		end
+		print("[adjustRequiredIngredientAmount] Adjusted ingredient " .. dump(name) .. " to " .. amount)
 	end
 
-	print(dump(get_recipe_name(recipe)) .. " ingredients = " .. amount)
+	logIndents = logIndents - 1
+	print("[adjustRequiredIngredientAmount] " .. dump(get_recipe_name(recipe)) .. " requirements adjusted to " .. dump(recipe))
 end
 
 function adjustCraftingTime(recipe)
 	-- make sure we can edit the crafting time
-	local canEdit = settings.startup["sgr-time-edit"].value
+	local canEdit = timeEditingEnabled
 	if canEdit == false then
 		return
 	end
 
 	-- Get amount according to settings
-	local outputType = settings.startup["sgr-time-type"].value
+	local outputType = timeCalculationType
 	local currentAmount = getRecipeCraftingTime(recipe)
 	local amount = currentAmount
 	if outputType == "total-required-ingredients" then
 		amount =  get_total_ingredients_required(recipe)
 	elseif outputType == "custom" then
-		amount = settings.startup["sgr-time-custom-amount"].value
+		amount = timeCustomAmount
 	elseif outputType == "max-recipe-depth" then
 		local ingredient_depth = get_ingredient_depth(recipe)
 		if ingredient_depth then
@@ -438,16 +544,26 @@ function adjustItemStackSize(item, recipe)
         return
     end
 
+    -- item, gun, ammo, armor, repair-tool, tool, item-with-entity-data, capsule, rail-planner, module, spidertron-remote
+
+
 	-- make sure we can edit the stack size
-	local canEdit = settings.startup["sgr-stacksize-edit"].value
+	local canEdit = stackSizeEditingEnabled
 	if canEdit == false then
 		print(item["name"] .. " stacksize is not enabled... skipping stack size!")
 		return
 	end
 
+	-- skip if this is not meant to change
+	local currentAmount = item["stack_size"]
+	if currentAmount == 0 then
+		print("[adjustItemStackSize] stack_size set to 0... skipping in case this item is not meant to be obtained")
+		return
+	end
+
 	-- get stack size according to settings
-	local stack_size = settings.startup["sgr-stacksize"].value
-	if settings.startup["sgr-should-multiply-stacksize"].value then
+	local stack_size = stackSizeItemAmount
+	if stackSizeMultiplyByTotalIngredients then
 		stack_size = stack_size * math.max(1, get_total_ingredients_required(recipe))
 	end
 	
@@ -455,7 +571,7 @@ function adjustItemStackSize(item, recipe)
 	local stack_size = math.max(1, math.min(stack_size, 4294967295))
 	item["stack_size"] = stack_size
 
-	print(dump(item["name"]) .. " stack_size = " .. stack_size)
+	print("[adjustItemStackSize] Setting stacksize of " .. dump(item["name"]) .. " to " .. dump(stack_size))
 end
 
 function getRecipeOutputAmount(recipe, recipeOutput)
@@ -494,6 +610,11 @@ function setRecipeOutputAmount(recipe, recipeOutput, amount)
 	local ingredient_parent = get_recipe_ingredient_parent(recipe)
 	local isSet = false
 
+	if type(recipeOutput) == 'table' and recipeOutput[2] ~= nil then
+		recipeOutput[2] = amount
+		isSet = false
+	end
+
 	if ingredient_parent.result_count ~= nil then
 		ingredient_parent.result_count = amount
 		isSet = true
@@ -521,45 +642,45 @@ function setRecipeOutputAmount(recipe, recipeOutput, amount)
 	end
 end
 
-function adjustRecipeOutput(recipe, recipeOutput, item)
-	if isItemStackable(item) == false then
+
+function adjustRecipeOutput(recipe, recipeOutput, outputItem)
+	if isItemStackable(outputItem) == false then
+		print("[adjustRecipeOutput] skipping type: " .. dump(outputItem))
 		return
 	end
 
+	local itemIsFluid = outputItem["type"] == "fluid"
+	print("[adjustRecipeOutput] output type: " .. dump(outputItem["type"]))
+
 	-- make sure we can edit the stack size
-	local canEdit = settings.startup["sgr-output-edit"].value
+	local canEdit = outputItemEditingEnabled
+	if itemIsFluid then
+		canEdit = outputFluidEditingEnabled
+	end
+
 	if canEdit == false then
 		print("[adjustRecipeOutput] output editting is disabled. skipping...")
 		return
 	end
 
-	-- Get amount according to settings
-	local outputType = settings.startup["sgr-output-type"].value
+	-- Check if we should skip this recipe
 	local currentAmount = getRecipeOutputAmount(recipe, recipeOutput)
 	if currentAmount == 0 then
-		print("[adjustRecipeOutput] output set to 0... skipping in case this item is not meant to be obtained")
+		print("[adjustRecipeOutput] output set to 0... skipping in case this outputItem is not meant to be obtained")
 		return
 	end
 
-
-	local amount = currentAmount
-	if outputType == "total-required-ingredients" then
-		amount = get_total_ingredients_required(recipe)
-	elseif outputType == "stack-size" then
-		amount = item["stack_size"]
-	elseif outputType == "custom" then
-		amount = settings.startup["sgr-output-custom-amount"].value
-	elseif outputType == "max-recipe-uses" then
-		amount = get_total_recipies_using_this_recipe(recipe)
+	-- get output amount
+	local amount = getAdjustRecipeOutputAmount(recipe, recipeOutput, outputItem)
+	if amount == nil then
+		print("[adjustRecipeOutput] could not adjust type due to unknown case... ")
+		return
 	end
 
 	-- set the highest amount if we are allowed to
-	-- uses default value if it's higher
-	if settings.startup["sgr-output-use-max-default"].value then
-		if amount <= currentAmount then
-			print("[adjustRecipeOutput] expected amount " .. dump(amount) .. " <= " .. dump(currentAmount) .. ". skipping...")
-			return
-		end
+	if amount <= currentAmount then
+		print("[adjustRecipeOutput] expected amount " .. dump(amount) .. " <= " .. dump(currentAmount) .. ". skipping...")
+		return
 	end
 
 	-- change amount and clamp to caps
@@ -568,6 +689,41 @@ function adjustRecipeOutput(recipe, recipeOutput, item)
 	print("[adjustRecipeOutput] Output set to " .. dump(output) .. " of " .. dump(recipe))
 end
 
+function getAdjustRecipeOutputAmount(recipe, recipeOutput, outputItem)
+	local itemIsFluid = outputItem["type"] == "fluid"
+
+	-- fluid
+	if itemIsFluid then
+		local amount = currentAmount
+		if outputFluidCalculationType == "total-required-ingredients" then
+			return get_total_ingredients_required(recipe)
+		elseif outputFluidCalculationType == "stack-size" then
+			return outputItem["stack_size"]
+		elseif outputFluidCalculationType == "custom" then
+			return outputFluidCustomAmount
+		elseif outputFluidCalculationType == "max-recipe-uses" then
+			return get_total_recipies_using_this_recipe(recipe)
+		end
+
+		-- return nothing
+		return nil
+	end
+
+	-- items/tools/ammo... etc
+	local amount = currentAmount
+	if outputItemCalculationType == "total-required-ingredients" then
+		return get_total_ingredients_required(recipe)
+	elseif outputItemCalculationType == "stack-size" then
+		return outputItem["stack_size"]
+	elseif outputItemCalculationType == "custom" then
+		return outputItemCustomAmount
+	elseif outputItemCalculationType == "max-recipe-uses" then
+		return get_total_recipies_using_this_recipe(recipe)
+	end
+
+	-- return nothing
+	return nil
+end
 -------------------------------------------
 -------------------------------------------
 -------------------------------------------
@@ -606,14 +762,8 @@ end
 
 function cacheItems(d)
 	for i, item in pairs(d) do
-		local t = type(item);
-		if t == "table" then
-			if item["stack_size"] ~= nil then
-				-- change total created amount to total amount of recipes required
-				cached_items[item["name"]] = item
-			else
-				cacheItems(item)
-			end
+		if type(item) == "table" then
+			cached_items[item["name"]] = item
 		end	
 	end
 end
@@ -628,7 +778,11 @@ end
 -- Change recipes
 --
 cacheRecipes()
-cacheItems(data.raw)
+
+local items_types_to_cache = {"item", "gun", "ammo", "armor", "repair-tool", "tool", "item-with-entity-data", "capsule", "rail-planner", "module", "spidertron-remote", "fluid", "container", "electric-pole"}
+for i, value in ipairs(items_types_to_cache) do
+	cacheItems(data.raw[value])
+end
 
 --print(dump(data.raw.recipe))
 
@@ -637,44 +791,41 @@ for i, recipe in pairs(data.raw.recipe) do
 	local processed = processedRecipes[recipe]
 	if recipe.type == "recipe" and processed ~= true then
 		processRecipe(recipe)
-
-		---if recipe.subgroup == 'fluid-recipes' and recipe.category == 'oil-processing' then
-		---	for j, result in pairs(recipe.results) do
-		---		processedRecipes[recipe_name] = true
-		---	end
-		---else
 		processedRecipes[recipe] = true
 		---end
 	end
 end
 
-print("CACHED RECIPES: " .. dump(cached_recipes))
---print("CACHED ITEMS: " .. dump(cached_items))
-
+--print("CACHED RECIPES: " .. dump(cached_recipes))
+print("CACHED ITEMS: " .. dump(cached_items))
 --print("RESEARCH: " .. dump(data.raw.technology))
 
 --
 -- Change research
 --
-
-
-local canEditStackSize = settings.startup["sgr-stacksize-edit"].value
-if canEditStackSize then
+local needsToEditResearch = researchRobotEditingEnabled or researchInserterEditingEnabled
+if needsToEditResearch then
 	for i, tech in pairs(data.raw.technology) do
 		if tech.effects ~= nil then
 			for j, effect in pairs(tech.effects) do
-					-- increase inserter stack size bonus
-					if effect.type == "stack-inserter-capacity-bonus" then
-						effect.modifier = effect.modifier * settings.startup["sgr-stacksize-inserter"].value
-					elseif effect.type == "inserter-stack-size-bonus" then
-						effect.modifier = effect.modifier * settings.startup["sgr-stacksize-stack-inserter"].value
+					if researchInserterEditingEnabled then
+						-- increase inserter stack size bonus
+						if effect.type == "stack-inserter-capacity-bonus" then
+							effect.modifier = effect.modifier * researchInserterStacksizeBonus
+						elseif effect.type == "inserter-stack-size-bonus" then
+							effect.modifier = effect.modifier * researchStackInserterStacksizeBonus
+					end
 
-					-- robot stack size bonus
-					else if effect.type == "worker-robot-storage" then
-						effect.modifier = effect.modifier * settings.startup["sgr-stacksize-robot"].value
+					if researchRobotEditingEnabled then
+						-- robot stack size bonus
+						if effect.type == "worker-robot-storage" then
+							effect.modifier = effect.modifier * researchRobotStacksizeBonus
+						end
 					end
 				end
 			end
 		end
 	end
 end
+
+--print(dump(fill))

@@ -1,67 +1,39 @@
 ---------------------------------------------------------------------------------------------------
-Version: 0.0.1
-Date: 21. 10. 2019
+Version: 0.4.0
+Date: 18. 08. 2020
+  Updates:
+    - Updated Mod Settings information
+    - Updated Mod Settings descriptions
+    - Renamed a lot of options to help future versions be more descirptive
+    - Optimized a few parts to increase performance when booting up the game
   Features:
-    - Recipes work as expected
----------------------------------------------------------------------------------------------------
-Version: 0.0.2
-Date: 22. 10. 2019
-  Features:
-    - Stack size of items is now set to 50x the total output from crafting an item.
----------------------------------------------------------------------------------------------------
-Version: 0.0.3
-Date: 28. 10. 2019
-  Features:
-    - Now works with several mods.
+    - Added 'Allow Item Stack Size Research Editing' checkbox
+    - Added 'Allow Robot Stack Size Research Editing' checkbox
+    - Added 'Allow Inserter Stack Size Research Editing' checkbox
+    - Added 'Allow Recipe Output Editing of Fluid' checkbox
+    - Added 'Recipe Output Fluid Calculation Type' checkbox
+    - Added 'Recipe Fluid Output Amount' checkbox
+    - Added 'Recipe Requirement Fluid Amount' checkbox
+    - Removed 'Recipe Output Use Max' option and made it on by default
   Bugfixes
-    - Mod not breaking when a recipe is not found
+    - Fixed Sorting order of some mod settings
+    - Fixed Stack Sizes for items set to 0 being modified
 ---------------------------------------------------------------------------------------------------
-Version: 0.0.4
-Date: 1. 11. 2019
+Version: 0.3.1
+Date: 06. 08. 2020
   Features:
-    - Increased stack size bonus of inserters by x50
-    - Increased stack size bonus of stack inserters by x20
-    - Added thumbnail
+    - Added Max Recipe Uses output setting option
+  Bugfixes
+    - Values in options can no longer be set to 0
+    - Fixed change recipe time not changing for some recipes.
 ---------------------------------------------------------------------------------------------------
-Version: 0.0.5
-Date: 29. 11. 2020
+Version: 0.3.0
+Date: 12. 07. 2020
   Features:
-    - Adjusted dependency to work for 0.18.x
-    - Optimized boot time
+    - Added Max Recipe Uses output setting option
   Bugfixes
-    - Mod now considers fluid-recipes when calculating output and stack sizes.
----------------------------------------------------------------------------------------------------
-Version: 0.0.6
-Date: 09. 02. 2020
-  Features:
-    - FactorioExtended-Plus now works with this mod
----------------------------------------------------------------------------------------------------
-Version: 0.1.0
-Date: 05. 04. 2020
-  Features:
-    - Added settings to modify what Super Generous Recipes edits and by how much
-    - Mod now works for Bobs mods
-    - Mod now works for Krastorio 2
-  Bugfixes
-    - Fixed 'Stack size can not be 0' error
----------------------------------------------------------------------------------------------------
-Version: 0.1.1
-Date: 06. 04. 2020
-  Bugfixes
-    - Fixed 'super-generous-recipes/data-updates.lua:183: attempt to concatenate a nil value'
-    - Added nil checks for debug logs
----------------------------------------------------------------------------------------------------
-Version: 0.1.2
-Date: 06. 04. 2020
-  Bugfixes
-    - Fixed 'stack_size' must be 1 when not-stackable is set.
----------------------------------------------------------------------------------------------------
-Version: 0.1.3
-Date: 10. 04. 2020
-  Features:
-    - Added setting to use default output value for recipes if it's higher than what's calculated.
-  Bugfixes
-    - Fixed small-electric-pole's output not being modified in Krastorio 2
+    - Fixed Error stopping the mod working for angels mod
+    - Fixed Error stopping the mod working for natural evolutions mod
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.0
 Date: 12. 04. 2020
@@ -73,20 +45,66 @@ Date: 12. 04. 2020
   Bugfixes
     - Fixed output of recipes that are meant to output 0 but are modified to return more (Krastorio 2 - Crushing sand)
 ---------------------------------------------------------------------------------------------------
-Version: 0.3.0
-Date: 12. 07. 2020
+Version: 0.1.3
+Date: 10. 04. 2020
   Features:
-    - Added Max Recipe Uses output setting option
+    - Added setting to use default output value for recipes if it's higher than what's calculated.
   Bugfixes
-    - Fixed Error stopping the mod working for angels mod
-    - Fixed Error stopping the mod working for natural evolutions mod
+    - Fixed small-electric-pole's output not being modified in Krastorio 2
 ---------------------------------------------------------------------------------------------------
+Version: 0.1.2
+Date: 06. 04. 2020
+  Bugfixes
+    - Fixed 'stack_size' must be 1 when not-stackable is set.
 ---------------------------------------------------------------------------------------------------
-Version: 0.3.1
-Date: 06. 08. 2020
+Version: 0.1.1
+Date: 06. 04. 2020
+  Bugfixes
+    - Fixed 'super-generous-recipes/data-updates.lua:183: attempt to concatenate a nil value'
+    - Added nil checks for debug logs
+---------------------------------------------------------------------------------------------------
+Version: 0.1.0
+Date: 05. 04. 2020
   Features:
-    - Added Max Recipe Uses output setting option
+    - Added settings to modify what Super Generous Recipes edits and by how much
+    - Mod now works for Bobs mods
+    - Mod now works for Krastorio 2
   Bugfixes
-    - Values in options can no longer be set to 0
-    - Fixed change recipe time not changing for some recipes.
+    - Fixed 'Stack size can not be 0' error
 ---------------------------------------------------------------------------------------------------
+Version: 0.0.6
+Date: 09. 02. 2020
+  Features:
+    - FactorioExtended-Plus now works with this mod
+---------------------------------------------------------------------------------------------------
+Version: 0.0.5
+Date: 29. 11. 2020
+  Features:
+    - Adjusted dependency to work for 0.18.x
+    - Optimized boot time
+  Bugfixes
+    - Mod now considers fluid-recipes when calculating output and stack sizes.
+---------------------------------------------------------------------------------------------------
+Version: 0.0.4
+Date: 1. 11. 2019
+  Features:
+    - Increased stack size bonus of inserters by x50
+    - Increased stack size bonus of stack inserters by x20
+    - Added thumbnail
+---------------------------------------------------------------------------------------------------
+Version: 0.0.3
+Date: 28. 10. 2019
+  Features:
+    - Now works with several mods.
+  Bugfixes
+    - Mod not breaking when a recipe is not found
+
+Version: 0.0.2
+Date: 22. 10. 2019
+  Features:
+    - Stack size of items is now set to 50x the total output from crafting an item.
+---------------------------------------------------------------------------------------------------
+Version: 0.0.1
+Date: 21. 10. 2019
+  Features:
+    - Recipes work as expected

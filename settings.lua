@@ -2,105 +2,145 @@ data:extend(
 {
 	{
 		type = "bool-setting",
-		name = "sgr-stacksize-edit",
+		name = "sgr-stacksize-item-edit",
 		setting_type = "startup",
 		default_value = true,
-		order = "stacksize_a"
+		order = "1.1"
+	},
+	{
+		type = "int-setting",
+		name = "sgr-stacksize-item",
+		setting_type = "startup",
+		default_value = 50,
+		order = "1.2"
 	},
 	{
 		type = "bool-setting",
 		name = "sgr-should-multiply-stacksize",
 		setting_type = "startup",
 		default_value = true,
-		order = "stacksize_b"
+		order = "1.3"
 	},
 	{
-		type = "int-setting",
-		name = "sgr-stacksize",
+		type = "bool-setting",
+		name = "sgr-stacksize-robot-stacksize-research-edit",
 		setting_type = "startup",
-		default_value = 50,
-		order = "stacksize_b"
+		default_value = true,
+		order = "1.4"
 	},
 	{
 		type = "int-setting",
 		name = "sgr-stacksize-robot",
 		setting_type = "startup",
 		default_value = 50,
-		order = "stacksize_c"
+        minimum_value = 1,
+        maximum_value = 65535,
+		order = "1.5"
+	},
+	{
+		type = "bool-setting",
+		name = "sgr-stacksize-inserter-stacksize-research-edit",
+		setting_type = "startup",
+		default_value = true,
+		order = "1.6"
 	},
 	{
 		type = "int-setting",
 		name = "sgr-stacksize-inserter",
 		setting_type = "startup",
 		default_value = 20,
-		order = "stacksize_d"
+		order = "1.7"
 	},
 	{
 		type = "int-setting",
 		name = "sgr-stacksize-stack-inserter",
 		setting_type = "startup",
 		default_value = 50,
-		order = "stacksize_e"
+		order = "1.8"
 	},
 	{
 		type = "bool-setting",
-		name = "sgr-output-edit",
+		name = "sgr-output-item-edit",
 		setting_type = "startup",
 		default_value = true,
-		order = "output_a"
+		order = "2.1"
 	},
 	{
 	    type = "string-setting",
-	    name = "sgr-output-type",
+	    name = "sgr-output-item-type",
 	    setting_type = "startup",
-        default_value = "total-required-ingredients",
+        default_value = "custom",
         allowed_values = {"custom", "total-required-ingredients", "stack-size", "max-recipe-uses"},
-		order = "output_b"
+		order = "2.2"
 	},
 	{
 	    type = "int-setting",
-	    name = "sgr-output-custom-amount",
+	    name = "sgr-output-item-custom-amount",
 	    setting_type = "startup",
-        default_value = 1,
+        default_value = 10,
         minimum_value = 1,
         maximum_value = 65535,
-		order = "output_c",
+		order = "2.3",
 	},
 	{
-	    type = "bool-setting",
-	    name = "sgr-output-use-max-default",
-	    setting_type = "startup",
+		type = "bool-setting",
+		name = "sgr-output-fluid-edit",
+		setting_type = "startup",
 		default_value = true,
-		order = "output_d"
+		order = "2.4"
+	},
+	{
+	    type = "string-setting",
+	    name = "sgr-output-fluid-type",
+	    setting_type = "startup",
+        default_value = "custom",
+        allowed_values = {"custom", "total-required-ingredients", "stack-size", "max-recipe-uses"},
+		order = "2.5"
+	},
+	{
+	    type = "int-setting",
+	    name = "sgr-output-fluid-custom-amount",
+	    setting_type = "startup",
+        default_value = 10,
+        minimum_value = 1,
+        maximum_value = 65535,
+		order = "2.6",
 	},
 	{
 		type = "bool-setting",
 		name = "sgr-requirements-edit",
 		setting_type = "startup",
 		default_value = true,
-		order = "requirements_a"
+		order = "3.1"
 	},
 	{
 	    type = "int-setting",
-	    name = "sgr-requirement-amount",
+	    name = "sgr-requirement-item-amount",
 	    setting_type = "startup",
         default_value = 1,
-		order = "requirements_b"
+		order = "3.2"
+	},
+	{
+	    type = "int-setting",
+	    name = "sgr-requirement-fluid-amount",
+	    setting_type = "startup",
+        default_value = 1,
+		order = "3.3"
 	},
 	{
 		type = "bool-setting",
 		name = "sgr-time-edit",
 		setting_type = "startup",
 		default_value = false,
-		order = "time_a"
+		order = "4.1"
 	},
 	{
 	    type = "string-setting",
 	    name = "sgr-time-type",
 	    setting_type = "startup",
-        default_value = "max-recipe-depth",
-        allowed_values = {"custom", "max-recipe-depth", "total-required-ingredients"},
-		order = "time_b"
+        default_value = "custom",
+        allowed_values = {"custom", "max-recipe-depth", "total-required-ingredients", "max-recipe-uses"},
+		order = "4.2"
 	},
 	{
 	    type = "double-setting",
@@ -108,6 +148,6 @@ data:extend(
 	    setting_type = "startup",
         default_value = 1,
         minimum_value = 0.1,
-		order = "time_c",
+		order = "4.3",
 	},
 })
