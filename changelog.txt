@@ -1,4 +1,28 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.6.0
+Date: 12. 12. 2020
+  Features:
+    - Added Recipe output Item Multiplier (default: 10)
+    - Added Recipe output Fluid Multiplier (default: 10)
+    - Added Recipe requirements Multiplier (default: 1)
+    - Added Recipe crafting time Multiplier (default: 1)
+
+  Updates:
+    - Changed calculated crafting time default from 1 second to 0.5 seconds (Reflects Factorio's Default)
+    - Added more info to Global Multiplier
+
+  Bugfixes:
+    - Turned off Debugging to speed up Factorio booting
+    - Fixed Conflict with Reverse Factory
+    - Fixed some output for recipes not being accurate when using "Default" option and global multiplier
+
+  Settings Changes:
+    - Stacksize editing now off by default
+    - Stacksize multiplier now off by default
+    - Robot Stacksize research now off by default
+    - Robot Stacksize default now set to 1 from 50
+    - Custom time amount now capped at 65535
+---------------------------------------------------------------------------------------------------
 Version: 0.5.0
 Date: 12. 12. 2020
   Features:

@@ -16,16 +16,21 @@ local globalMultiplier = settings.startup["sgr-global-multiplier"].value
 local outputItemEditingEnabled = settings.startup["sgr-output-item-edit"].value
 local outputItemCalculationType = settings.startup["sgr-output-item-type"].value
 local outputItemCustomAmount = settings.startup["sgr-output-item-custom-amount"].value
+local outputItemMultiplier = settings.startup["sgr-output-item-multiplier"].value
+
 local outputFluidEditingEnabled = settings.startup["sgr-output-fluid-edit"].value
 local outputFluidCalculationType = settings.startup["sgr-output-fluid-type"].value
 local outputFluidCustomAmount = settings.startup["sgr-output-fluid-custom-amount"].value
+local outputFluidMultiplier = settings.startup["sgr-output-fluid-multiplier"].value
 
 local requirementEditingEnabled = settings.startup["sgr-requirements-edit"].value
+local requirementMultiplier = settings.startup["sgr-requirements-multiplier"].value
 local requirementCalculationType = settings.startup["sgr-requirement-item-type"].value;
 local requirementCustomItemAmount = settings.startup["sgr-requirement-item-amount"].value;
 local requirementCustomFluidAmount = settings.startup["sgr-requirement-fluid-amount"].value;
 
 local timeEditingEnabled = settings.startup["sgr-time-edit"].value
+local timeMultiplier = settings.startup["sgr-time-multiplier"].value
 local timeCalculationType = settings.startup["sgr-time-type"].value
 local timeCustomAmount = settings.startup["sgr-time-custom-amount"].value
 
@@ -41,7 +46,7 @@ local researchInserterStacksizeBonus = settings.startup["sgr-stacksize-inserter"
 local researchStackInserterStacksizeBonus = settings.startup["sgr-stacksize-stack-inserter"].value
 
 -- debug
-local enableLogs = true
+local enableLogs = false
 local logIndents = 0;
 
 -----------------------------
@@ -197,13 +202,13 @@ function get_total_recipies_using_this_recipe(recipe, optional_recipes_being_cal
 	end
 
 	-- calculate
-	print("Calculating calculate_recipes_uses: " .. dump(recipe_name) .. " " .. dump(recipe))
+	--print("Calculating calculate_recipes_uses: " .. dump(recipe_name) .. " " .. dump(recipe))
 	logIndents = logIndents + 1
 	local uses = calculate_recipes_uses(recipe, optional_recipes_being_calculated or {})
 	logIndents = logIndents - 1
 
 	-- cache
-	print("Calculated calculate_recipes_uses: " .. dump(recipe_name) .. ": " .. dump(uses))
+	--print("Calculated calculate_recipes_uses: " .. dump(recipe_name) .. ": " .. dump(uses))
 	if recipe_name ~= nil then
 		local cached = cached_recipe_uses[recipe_name]
 		if cached ~= nil then
@@ -245,13 +250,13 @@ end
 
 function calculate_ingredient_depth(recipe, recipes_tried)
 	local recipe_name = get_recipe_name(recipe)
-	print("Calculating calculate_ingredient_depth: " .. dump(recipe_name) .. " " .. dump(recipe))
+	--print("Calculating calculate_ingredient_depth: " .. dump(recipe_name) .. " " .. dump(recipe))
 	recipes_tried[recipe] = true
 
 	-- calculate
 	depth = 0
 	local recipe_ingredients = get_recipe_ingredients(recipe)
-	print("Ingredients: " .. dump(recipe_ingredients))
+	--print("Ingredients: " .. dump(recipe_ingredients))
 	for i, ingredient in pairs(recipe_ingredients) do
 		local ingredient_name = get_ingredient_name(ingredient)
 		local ingredient_recipe = cached_recipes[ingredient_name] -- steel bar recipe
@@ -265,7 +270,7 @@ function calculate_ingredient_depth(recipe, recipes_tried)
 	end
 
 	-- cache
-	print("Calculated max depth: " .. dump(recipe_name) .. ": " .. dump(depth))
+	--print("Calculated max depth: " .. dump(recipe_name) .. ": " .. dump(depth))
 	if recipe_name ~= nil then
 		cached_ingredient_depth[recipe_name] = depth
 	end
@@ -296,7 +301,7 @@ function calculate_total_ingredients(recipe, recipes_tried)
 	-- flame ammo = crude oil + steel bar
 	-- steel bar = iron bar
 	local recipe_name = get_recipe_name(recipe)
-	print("Calculating total ingredients for: " .. dump(recipe_name) .. " " .. dump(recipe))
+	--print("Calculating total ingredients for: " .. dump(recipe_name) .. " " .. dump(recipe))
 	recipes_tried[recipe] = true
 	logIndents = logIndents + 1
 
@@ -310,13 +315,13 @@ function calculate_total_ingredients(recipe, recipes_tried)
 		if ingredient_recipe then
 			if recipes_tried[ingredient_recipe] ~= nil then
 				-- this recipe is trying to get the recipe that another relies on. Just ignore it.
-				print("LOG: Recursive recipe " .. dump(recipe_name) .. "->" .. dump(ingredient_name))
+				--print("LOG: Recursive recipe " .. dump(recipe_name) .. "->" .. dump(ingredient_name))
 			else 
 				-- not calculated yet
 				total = total + calculate_total_ingredients(ingredient_recipe, recipes_tried) + 1
 			end
 		else
-			print("LOG: Did not find recipe for ingredient " .. dump(ingredient_name) .. " for " .. dump(recipe_name))
+			--print("LOG: Did not find recipe for ingredient " .. dump(ingredient_name) .. " for " .. dump(recipe_name))
 			total = total + 1
 		end
 	end
@@ -325,11 +330,11 @@ function calculate_total_ingredients(recipe, recipes_tried)
 	if recipe_name ~= nil then
 		cached_ingredient_counts[recipe_name] = total
 	else
-		print("No name for recipe to cache ingredient count: " .. dump(recipe))
+		--print("No name for recipe to cache ingredient count: " .. dump(recipe))
 	end
 
 
-	print(dump(recipe_name) .. " calculated ingredients: " .. total)
+	--print(dump(recipe_name) .. " calculated ingredients: " .. total)
 	logIndents = logIndents - 1
 
 	return math.max(total, 1)
@@ -454,13 +459,13 @@ function adjustRequiredIngredientAmount(recipe)
 		return
 	end
 
-	print("[adjustRequiredIngredientAmount] Adjusting Requirements for: " .. dump(get_recipe_name(recipe)))
+	--print("[adjustRequiredIngredientAmount] Adjusting Requirements for: " .. dump(get_recipe_name(recipe)))
 	logIndents = logIndents + 1
 
 	-- edit ingredient requirement amount
 	local recipe_ingredients = get_recipe_ingredients(recipe)
 	for i, ingredient in pairs(recipe_ingredients) do
-		print("[adjustRequiredIngredientAmount] Adjusting ingredient " .. dump(ingredient))
+		--print("[adjustRequiredIngredientAmount] Adjusting ingredient " .. dump(ingredient))
 		-- get required amount
 		local amount = 1
 		if requirementCalculationType == "default" then
@@ -480,11 +485,14 @@ function adjustRequiredIngredientAmount(recipe)
 	end
 
 	logIndents = logIndents - 1
-	print("[adjustRequiredIngredientAmount] " .. dump(get_recipe_name(recipe)) .. " requirements adjusted to " .. dump(recipe))
+	--print("[adjustRequiredIngredientAmount] " .. dump(get_recipe_name(recipe)) .. " requirements adjusted to " .. dump(recipe))
 end
 
 function setRequiredIngredientAmount(ingredient, amount)
-	local ingredientAmount = math.max(1, math.min(globalMultiplier * amount, 65535))
+	local scaledAmount = amount * globalMultiplier * requirementMultiplier
+
+	-- factorio requires minimum of 1
+	local ingredientAmount = math.max(1, math.min(scaledAmount, 65535))
 
 	-- true  = {"1":{"1":"stone-brick"}}
 	-- false = {"1":{"name":"stone-brick", "amount":5}}
@@ -500,7 +508,7 @@ function setRequiredIngredientAmount(ingredient, amount)
 		ingredient["amount"] = ingredientAmount
 	end
 
-	print("[adjustRequiredIngredientAmount] Adjusted ingredient " .. dump(ingredient) .. " to " .. dump(ingredientAmount))
+	--print("[adjustRequiredIngredientAmount] Adjusted ingredient " .. dump(ingredient) .. " to " .. dump(ingredientAmount))
 end
 
 function getRequiredIngredientAmount(ingredient)
@@ -571,7 +579,7 @@ end
 function adjustItemStackSize(item, recipe)
 	--print("Processing stack_size: " .. dump(item))
 	if isItemStackable(item) == false then
-		print(item["name"] .. " is not stackable... skipping stack size!")
+		--print(item["name"] .. " is not stackable... skipping stack size!")
         return
     end
 
@@ -581,14 +589,14 @@ function adjustItemStackSize(item, recipe)
 	-- make sure we can edit the stack size
 	local canEdit = stackSizeEditingEnabled
 	if canEdit == false then
-		print(item["name"] .. " stacksize is not enabled... skipping stack size!")
+		--print(item["name"] .. " stacksize is not enabled... skipping stack size!")
 		return
 	end
 
 	-- skip if this is not meant to change
 	local currentAmount = item["stack_size"]
 	if currentAmount == 0 then
-		print("[adjustItemStackSize] stack_size set to 0... skipping in case this item is not meant to be obtained")
+		--print("[adjustItemStackSize] stack_size set to 0... skipping in case this item is not meant to be obtained")
 		return
 	end
 
@@ -602,7 +610,7 @@ function adjustItemStackSize(item, recipe)
 	local stack_size = math.max(1, math.min(stack_size, 4294967295))
 	item["stack_size"] = stack_size
 
-	print("[adjustItemStackSize] Setting stacksize of " .. dump(item["name"]) .. " to " .. dump(stack_size))
+	--print("[adjustItemStackSize] Setting stacksize of " .. dump(item["name"]) .. " to " .. dump(stack_size))
 end
 
 function getRecipeOutputAmount(recipe, recipeOutput)
@@ -618,7 +626,7 @@ function getRecipeOutputAmount(recipe, recipeOutput)
 		return recipeOutput.amount
 	end
 
-	return 1
+	return 1 -- factorio default
 end
 
 function getRecipeCraftingTime(recipe)
@@ -628,12 +636,12 @@ function getRecipeCraftingTime(recipe)
 		return recipe.energy_required
 	end
 
-	-- If the crafting time does not exist in the ingredient type then it's attached to the recipe
-	return 1
+	return 0.5 -- factorio default
 end
 
 function setRecipeCraftingTime(recipe, amount)
-	local t = math.max(amount * globalMultiplier, 0.1)
+	local scaledTime = amount * globalMultiplier * timeMultiplier
+	local t = math.min(math.max(0.1, scaledTime), 65535)
 
 	if recipe.normal then
 		recipe.normal.energy_required = t
@@ -642,59 +650,46 @@ function setRecipeCraftingTime(recipe, amount)
 		recipe.energy_required = t
 	end
 	
-	print(dump(get_recipe_name(recipe)) .. " crafting time = " .. dump(t) .. " " .. dump(recipe))
+	--print(dump(get_recipe_name(recipe)) .. " crafting time = " .. dump(t) .. " " .. dump(recipe))
 end
 
 function setRecipeOutputAmount(recipe, recipeOutput, amount)
+	-- recipeOutput = {"type":"item","name":"pamk3-battmk3","amount":5} 
+	-- amount = 10
+	-- receipe = {"type":"recipe","name":"rf-pamk3-pamk4","enabled":true,"energy_required":240,"ingredients":{"1":{"type":"item","name":"pamk3-pamk4","amount":2}},"requester_paste_multiplier":1,"icon":"__Power Armor MK3__/graphics/icons/pamk3-pamk4.png","icon_size":64,"icon_mipmaps":4,"category":"recycle-products","subgroup":"recycling","hidden":true,"allow_decomposition":false,"results":{"1":{"type":"item","name":"pamk3-pamk3","amount":1},"2":{"type":"item","name":"pamk3-battmk3","amount":5},"3":{"type":"item","name":"fusion-reactor-equipment","amount":2},"4":{"type":"item","name":"rocket-control-unit","amount":40},"5":{"type":"item","name":"low-density-structure","amount":200}}}
 	local outputAmount =  math.max(1, math.min(amount * globalMultiplier, 65535))
-	local ingredient_parent = get_recipe_ingredient_parent(recipe)
-	local isSet = false
 
-	print("[adjustRecipeOutput] Pre Output set to " .. dump(outputAmount) .. " of " .. dump(recipe))
+	print("[adjustRecipeOutput] Pre Output " .. dump(outputAmount) .. " of " .. " output: " .. dump(recipeOutput) .. " recipe: " .. dump(recipe))
+	logIndents = logIndents + 1
 
 	if type(recipeOutput) == 'table' and recipeOutput[2] ~= nil then
 		recipeOutput[2] = outputAmount
-		isSet = false
-	end
-
-	if ingredient_parent.result_count ~= nil then
-		ingredient_parent.result_count = outputAmount
-		isSet = true
-	end
-
-	local ingredient_buckets = nil
-	if ingredient_parent.results then
-		ingredient_buckets = ingredient_parent.results
+		print("[adjustRecipeOutput] adjusteda " .. dump(recipeOutput))
+	elseif type(recipeOutput) == 'table' and recipeOutput.amount ~= nil then
+		recipeOutput.amount = outputAmount
+		print("[adjustRecipeOutput] adjustedb " .. dump(recipeOutput))
 	else
-		ingredient_buckets = {}
-		ingredient_buckets[1] = ingredient_parent
-	end
-
-	for i,bucket in ipairs(ingredient_buckets) do
-		if bucket.amount ~= nil then
-			bucket.amount = outputAmount
-			isSet = true
-		end
-	end
-	
-	
-	-- fallback
-	if isSet == false then
+		-- output tables that do not have 'amount' require the parent to have the 
+		local ingredient_parent = get_recipe_ingredient_parent(recipe)
+		print("[adjustRecipeOutput] adjustedc ingredient_parent " .. dump(ingredient_parent))
 		ingredient_parent.result_count = outputAmount
+		print("[adjustRecipeOutput] adjustedc " .. dump(recipeOutput))
 	end
 
-	print("[adjustRecipeOutput] Post Output set to " .. dump(outputAmount) .. " of " .. dump(recipe))
+	logIndents = logIndents - 1
+	print("[adjustRecipeOutput] Post Output set to " .. dump(outputAmount))
 end
 
 
 function adjustRecipeOutput(recipe, recipeOutput, outputItem)
+	print("[adjustRecipeOutput] outputItem " .. dump(outputItem))
+
 	if isItemStackable(outputItem) == false then
-		print("[adjustRecipeOutput] skipping type: " .. dump(outputItem))
+		print("[adjustRecipeOutput] skipping non-stackable: " .. dump(outputItem))
 		return
 	end
 
 	local itemIsFluid = outputItem["type"] == "fluid"
-	print("[adjustRecipeOutput] output type: " .. dump(outputItem["type"]))
 
 	-- make sure we can edit the stack size
 	local canEdit = outputItemEditingEnabled
@@ -721,6 +716,13 @@ function adjustRecipeOutput(recipe, recipeOutput, outputItem)
 		return
 	end
 
+	-- multiply by type
+	if itemIsFluid then
+		amount = amount * outputFluidMultiplier
+	else
+		amount = amount * outputItemMultiplier
+	end
+
 	-- set the highest amount if we are allowed to
 	-- if amount <= currentAmount then
 	-- 	print("[adjustRecipeOutput] expected amount " .. dump(amount) .. " <= " .. dump(currentAmount) .. ". skipping...")
@@ -733,8 +735,6 @@ end
 
 function getAdjustRecipeOutputAmount(recipe, recipeOutput, outputItem, currentAmount)
 	local itemIsFluid = outputItem["type"] == "fluid"
-
-	print("[adjustRecipeOutput] outputFluidCalculationType " .. outputFluidCalculationType)
 
 	-- fluid
 	if itemIsFluid then

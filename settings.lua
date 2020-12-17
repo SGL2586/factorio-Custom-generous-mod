@@ -12,7 +12,7 @@ data:extend(
 		type = "bool-setting",
 		name = "sgr-stacksize-item-edit",
 		setting_type = "startup",
-		default_value = true,
+		default_value = false,
 		order = "1.1"
 	},
 	{
@@ -26,21 +26,21 @@ data:extend(
 		type = "bool-setting",
 		name = "sgr-should-multiply-stacksize",
 		setting_type = "startup",
-		default_value = true,
+		default_value = false,
 		order = "1.3"
 	},
 	{
 		type = "bool-setting",
 		name = "sgr-stacksize-robot-stacksize-research-edit",
 		setting_type = "startup",
-		default_value = true,
+		default_value = false,
 		order = "1.4"
 	},
 	{
 		type = "int-setting",
 		name = "sgr-stacksize-robot",
 		setting_type = "startup",
-		default_value = 50,
+		default_value = 1,
         minimum_value = 1,
         maximum_value = 65535,
 		order = "1.5"
@@ -74,6 +74,15 @@ data:extend(
 		order = "2.1"
 	},
 	{
+	    type = "int-setting",
+	    name = "sgr-output-item-multiplier",
+	    setting_type = "startup",
+        default_value = 10,
+        minimum_value = 0,
+        maximum_value = 65535,
+		order = "2.1",
+	},
+	{
 	    type = "string-setting",
 	    name = "sgr-output-item-type",
 	    setting_type = "startup",
@@ -95,7 +104,16 @@ data:extend(
 		name = "sgr-output-fluid-edit",
 		setting_type = "startup",
 		default_value = true,
-		order = "2.4"
+		order = "3.1"
+	},
+	{
+	    type = "int-setting",
+	    name = "sgr-output-fluid-multiplier",
+	    setting_type = "startup",
+        default_value = 10,
+        minimum_value = 0,
+        maximum_value = 65535,
+		order = "3.2",
 	},
 	{
 	    type = "string-setting",
@@ -103,7 +121,7 @@ data:extend(
 	    setting_type = "startup",
         default_value = "default",
         allowed_values = {"default", "custom", "total-required-ingredients", "stack-size", "max-recipe-uses"},
-		order = "2.5"
+		order = "3.3"
 	},
 	{
 	    type = "int-setting",
@@ -112,14 +130,23 @@ data:extend(
         default_value = 10,
         minimum_value = 1,
         maximum_value = 65535,
-		order = "2.6",
+		order = "3.4",
 	},
 	{
 		type = "bool-setting",
 		name = "sgr-requirements-edit",
 		setting_type = "startup",
 		default_value = true,
-		order = "3.1"
+		order = "4.1"
+	},
+	{
+	    type = "int-setting",
+	    name = "sgr-requirements-multiplier",
+	    setting_type = "startup",
+        default_value = 1,
+        minimum_value = 0,
+        maximum_value = 65535,
+		order = "4.2",
 	},
 	{
 	    type = "string-setting",
@@ -127,28 +154,37 @@ data:extend(
 	    setting_type = "startup",
         default_value = "default",
         allowed_values = {"default", "custom"},
-		order = "3.2"
+		order = "4.3"
 	},
 	{
 	    type = "int-setting",
 	    name = "sgr-requirement-item-amount",
 	    setting_type = "startup",
         default_value = 1,
-		order = "3.3"
+		order = "4.4"
 	},
 	{
 	    type = "int-setting",
 	    name = "sgr-requirement-fluid-amount",
 	    setting_type = "startup",
         default_value = 1,
-		order = "3.4"
+		order = "4.5"
 	},
 	{
 		type = "bool-setting",
 		name = "sgr-time-edit",
 		setting_type = "startup",
 		default_value = false,
-		order = "4.1"
+		order = "5.1"
+	},
+	{
+	    type = "int-setting",
+	    name = "sgr-time-multiplier",
+	    setting_type = "startup",
+        default_value = 1,
+        minimum_value = 0,
+        maximum_value = 65535,
+		order = "5.2"
 	},
 	{
 	    type = "string-setting",
@@ -156,7 +192,7 @@ data:extend(
 	    setting_type = "startup",
         default_value = "default",
         allowed_values = {"default", "custom", "max-recipe-depth", "total-required-ingredients", "max-recipe-uses"},
-		order = "4.2"
+		order = "5.3"
 	},
 	{
 	    type = "double-setting",
@@ -164,6 +200,7 @@ data:extend(
 	    setting_type = "startup",
         default_value = 1,
         minimum_value = 0.1,
-		order = "4.3",
+        maximum_value = 65535,
+		order = "5.4",
 	},
 })
