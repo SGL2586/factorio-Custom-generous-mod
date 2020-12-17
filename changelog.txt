@@ -1,23 +1,37 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.5.0
+Date: 12. 12. 2020
+  Features:
+    - Added Global Multiplier to edit output, crafting time and requirements
+    - Added 'Default' Output Item type
+    - Added 'Default' Output Fluid type
+    - Added 'Default' Crafting Time type
+    - Added Requirement Type dropdown with 'Default' and 'Custom' options
+---------------------------------------------------------------------------------------------------
+Version: 0.4.1
+Date: 30. 11. 2020
+  Features:
+    - Bumped support for 1.1.x
+---------------------------------------------------------------------------------------------------
 Version: 0.4.0
 Date: 18. 08. 2020
-  Updates:
-    - Updated Mod Settings information
-    - Updated Mod Settings descriptions
-    - Renamed a lot of options to help future versions be more descirptive
-    - Optimized a few parts to increase performance when booting up the game
-  Features:
-    - Added 'Allow Item Stack Size Research Editing' checkbox
-    - Added 'Allow Robot Stack Size Research Editing' checkbox
-    - Added 'Allow Inserter Stack Size Research Editing' checkbox
-    - Added 'Allow Recipe Output Editing of Fluid' checkbox
-    - Added 'Recipe Output Fluid Calculation Type' checkbox
-    - Added 'Recipe Fluid Output Amount' checkbox
-    - Added 'Recipe Requirement Fluid Amount' checkbox
-    - Removed 'Recipe Output Use Max' option and made it on by default
-  Bugfixes
-    - Fixed Sorting order of some mod settings
-    - Fixed Stack Sizes for items set to 0 being modified
+Updates:
+  - Updated Mod Settings information
+  - Updated Mod Settings descriptions
+  - Renamed a lot of options to help future versions be more descirptive
+  - Optimized a few parts to increase performance when booting up the game
+Features:
+  - Added 'Allow Item Stack Size Research Editing' checkbox
+  - Added 'Allow Robot Stack Size Research Editing' checkbox
+  - Added 'Allow Inserter Stack Size Research Editing' checkbox
+  - Added 'Allow Recipe Output Editing of Fluid' checkbox
+  - Added 'Recipe Output Fluid Calculation Type' dropdown
+  - Added 'Recipe Fluid Output Amount'
+  - Added 'Recipe Requirement Fluid Amount'
+  - Removed 'Recipe Output Use Max' option and made it on by default
+Bugfixes
+  - Fixed Sorting order of some mod settings
+  - Fixed Stack Sizes for items set to 0 being modified
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.1
 Date: 06. 08. 2020

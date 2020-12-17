@@ -11,6 +11,8 @@ local cached_recipe_uses = {}
 local processedRecipes = {}
 
 -- settings
+local globalMultiplier = settings.startup["sgr-global-multiplier"].value
+
 local outputItemEditingEnabled = settings.startup["sgr-output-item-edit"].value
 local outputItemCalculationType = settings.startup["sgr-output-item-type"].value
 local outputItemCustomAmount = settings.startup["sgr-output-item-custom-amount"].value
@@ -19,6 +21,7 @@ local outputFluidCalculationType = settings.startup["sgr-output-fluid-type"].val
 local outputFluidCustomAmount = settings.startup["sgr-output-fluid-custom-amount"].value
 
 local requirementEditingEnabled = settings.startup["sgr-requirements-edit"].value
+local requirementCalculationType = settings.startup["sgr-requirement-item-type"].value;
 local requirementCustomItemAmount = settings.startup["sgr-requirement-item-amount"].value;
 local requirementCustomFluidAmount = settings.startup["sgr-requirement-fluid-amount"].value;
 
@@ -38,7 +41,7 @@ local researchInserterStacksizeBonus = settings.startup["sgr-stacksize-inserter"
 local researchStackInserterStacksizeBonus = settings.startup["sgr-stacksize-stack-inserter"].value
 
 -- debug
-local enableLogs = false
+local enableLogs = true
 local logIndents = 0;
 
 -----------------------------
@@ -451,42 +454,69 @@ function adjustRequiredIngredientAmount(recipe)
 		return
 	end
 
-
-	print("[adjustRequiredIngredientAmount] Adjusted Requirement for: " .. dump(get_recipe_name(recipe)))
+	print("[adjustRequiredIngredientAmount] Adjusting Requirements for: " .. dump(get_recipe_name(recipe)))
 	logIndents = logIndents + 1
 
 	-- edit ingredient requirement amount
-	local itemAmount = requirementCustomItemAmount
-	local fluidAmount = requirementCustomFluidAmount
 	local recipe_ingredients = get_recipe_ingredients(recipe)
 	for i, ingredient in pairs(recipe_ingredients) do
 		print("[adjustRequiredIngredientAmount] Adjusting ingredient " .. dump(ingredient))
-		-- true  = {"1":{"1":"stone-brick"}}
-		-- false = {"1":{"name":"stone-brick", "amount":5}}
-		local isSimpleTable = ingredient["name"] == nil -- {"1":{"1":"stone-brick"}}
-		local name = get_ingredient_name(ingredient)
-		local ingredientType = get_ingredient_type(ingredient)
-
-
-		local amount = requirementCustomItemAmount
-		if ingredient["type"] == "fluid" then
-			amount = requirementCustomFluidAmount
-		end
-
-		if isSimpleTable then
-			if type(ingredient[1]) == "string" then
-				ingredient[2] = amount
+		-- get required amount
+		local amount = 1
+		if requirementCalculationType == "default" then
+			amount = getRequiredIngredientAmount(ingredient)
+		elseif requirementCalculationType == "custom" then
+			if ingredient["type"] == "fluid" then
+				amount = requirementCustomFluidAmount
 			else
-				ingredient[1] = amount
+				amount = requirementCustomItemAmount
 			end
 		else
-			ingredient["amount"] = amount
+			amount = getRequiredIngredientAmount(ingredient)
 		end
-		print("[adjustRequiredIngredientAmount] Adjusted ingredient " .. dump(name) .. " to " .. amount)
+
+		-- change ingredient amount
+		setRequiredIngredientAmount(ingredient, amount)
 	end
 
 	logIndents = logIndents - 1
 	print("[adjustRequiredIngredientAmount] " .. dump(get_recipe_name(recipe)) .. " requirements adjusted to " .. dump(recipe))
+end
+
+function setRequiredIngredientAmount(ingredient, amount)
+	local ingredientAmount = math.max(1, math.min(globalMultiplier * amount, 65535))
+
+	-- true  = {"1":{"1":"stone-brick"}}
+	-- false = {"1":{"name":"stone-brick", "amount":5}}
+	local isSimpleTable = ingredient["name"] == nil -- {"1":{"1":"stone-brick"}}
+
+	if isSimpleTable then
+		if type(ingredient[1]) == "string" then
+			ingredient[2] = ingredientAmount
+		else
+			ingredient[1] = ingredientAmount
+		end
+	else
+		ingredient["amount"] = ingredientAmount
+	end
+
+	print("[adjustRequiredIngredientAmount] Adjusted ingredient " .. dump(ingredient) .. " to " .. dump(ingredientAmount))
+end
+
+function getRequiredIngredientAmount(ingredient)
+	-- true  = {"1":{"1":"stone-brick"}}
+	-- false = {"1":{"name":"stone-brick", "amount":5}}
+	local isSimpleTable = ingredient["name"] == nil -- {"1":{"1":"stone-brick"}}
+
+	if isSimpleTable then
+		if type(ingredient[1]) == "string" then
+			return ingredient[2]
+		else
+			return ingredient[1]
+		end
+	else
+		return ingredient["amount"]
+	end
 end
 
 function adjustCraftingTime(recipe)
@@ -500,7 +530,9 @@ function adjustCraftingTime(recipe)
 	local outputType = timeCalculationType
 	local currentAmount = getRecipeCraftingTime(recipe)
 	local amount = currentAmount
-	if outputType == "total-required-ingredients" then
+	if outputType == "default" then
+		amount = currentAmount
+	elseif outputType == "total-required-ingredients" then
 		amount =  get_total_ingredients_required(recipe)
 	elseif outputType == "custom" then
 		amount = timeCustomAmount
@@ -515,9 +547,8 @@ function adjustCraftingTime(recipe)
 		amount = get_total_recipies_using_this_recipe(recipe)
 	end
 
-	-- edit ingredient requirement amount
+	-- edit ingredient crafting time
 	setRecipeCraftingTime(recipe, amount)
-	print(dump(get_recipe_name(recipe)) .. " crafting time = " .. amount .. " " .. dump(recipe))
 end
 
 function isItemStackable(item)
@@ -591,32 +622,43 @@ function getRecipeOutputAmount(recipe, recipeOutput)
 end
 
 function getRecipeCraftingTime(recipe)
-	return recipe.energy_required
+	if recipe.normal and recipe.normal.energy_required then
+		return recipe.normal.energy_required
+	elseif recipe.energy_required then
+		return recipe.energy_required
+	end
+
+	-- If the crafting time does not exist in the ingredient type then it's attached to the recipe
+	return 1
 end
 
 function setRecipeCraftingTime(recipe, amount)
-	local t = math.max(amount, 0.1)
+	local t = math.max(amount * globalMultiplier, 0.1)
 
 	if recipe.normal then
 		recipe.normal.energy_required = t
-	end
-
-	if recipe.energy_required then
+	else
+		-- If the crafting time does not exist in the ingredient type then it's attached to the recipe
 		recipe.energy_required = t
 	end
+	
+	print(dump(get_recipe_name(recipe)) .. " crafting time = " .. dump(t) .. " " .. dump(recipe))
 end
 
 function setRecipeOutputAmount(recipe, recipeOutput, amount)
+	local outputAmount =  math.max(1, math.min(amount * globalMultiplier, 65535))
 	local ingredient_parent = get_recipe_ingredient_parent(recipe)
 	local isSet = false
 
+	print("[adjustRecipeOutput] Pre Output set to " .. dump(outputAmount) .. " of " .. dump(recipe))
+
 	if type(recipeOutput) == 'table' and recipeOutput[2] ~= nil then
-		recipeOutput[2] = amount
+		recipeOutput[2] = outputAmount
 		isSet = false
 	end
 
 	if ingredient_parent.result_count ~= nil then
-		ingredient_parent.result_count = amount
+		ingredient_parent.result_count = outputAmount
 		isSet = true
 	end
 
@@ -630,7 +672,7 @@ function setRecipeOutputAmount(recipe, recipeOutput, amount)
 
 	for i,bucket in ipairs(ingredient_buckets) do
 		if bucket.amount ~= nil then
-			bucket.amount = amount
+			bucket.amount = outputAmount
 			isSet = true
 		end
 	end
@@ -638,8 +680,10 @@ function setRecipeOutputAmount(recipe, recipeOutput, amount)
 	
 	-- fallback
 	if isSet == false then
-		ingredient_parent.result_count = amount
+		ingredient_parent.result_count = outputAmount
 	end
+
+	print("[adjustRecipeOutput] Post Output set to " .. dump(outputAmount) .. " of " .. dump(recipe))
 end
 
 
@@ -671,31 +715,32 @@ function adjustRecipeOutput(recipe, recipeOutput, outputItem)
 	end
 
 	-- get output amount
-	local amount = getAdjustRecipeOutputAmount(recipe, recipeOutput, outputItem)
+	local amount = getAdjustRecipeOutputAmount(recipe, recipeOutput, outputItem, currentAmount)
 	if amount == nil then
 		print("[adjustRecipeOutput] could not adjust type due to unknown case... ")
 		return
 	end
 
 	-- set the highest amount if we are allowed to
-	if amount <= currentAmount then
-		print("[adjustRecipeOutput] expected amount " .. dump(amount) .. " <= " .. dump(currentAmount) .. ". skipping...")
-		return
-	end
+	-- if amount <= currentAmount then
+	-- 	print("[adjustRecipeOutput] expected amount " .. dump(amount) .. " <= " .. dump(currentAmount) .. ". skipping...")
+	-- 	return
+	-- end
 
 	-- change amount and clamp to caps
-	local output = math.max(1, math.min(amount, 65535))
-	setRecipeOutputAmount(recipe, recipeOutput, output)
-	print("[adjustRecipeOutput] Output set to " .. dump(output) .. " of " .. dump(recipe))
+	setRecipeOutputAmount(recipe, recipeOutput, amount)
 end
 
-function getAdjustRecipeOutputAmount(recipe, recipeOutput, outputItem)
+function getAdjustRecipeOutputAmount(recipe, recipeOutput, outputItem, currentAmount)
 	local itemIsFluid = outputItem["type"] == "fluid"
+
+	print("[adjustRecipeOutput] outputFluidCalculationType " .. outputFluidCalculationType)
 
 	-- fluid
 	if itemIsFluid then
-		local amount = currentAmount
-		if outputFluidCalculationType == "total-required-ingredients" then
+		if outputFluidCalculationType == "default" then
+			return currentAmount
+		elseif outputFluidCalculationType == "total-required-ingredients" then
 			return get_total_ingredients_required(recipe)
 		elseif outputFluidCalculationType == "stack-size" then
 			return outputItem["stack_size"]
@@ -710,8 +755,9 @@ function getAdjustRecipeOutputAmount(recipe, recipeOutput, outputItem)
 	end
 
 	-- items/tools/ammo... etc
-	local amount = currentAmount
-	if outputItemCalculationType == "total-required-ingredients" then
+	if outputItemCalculationType == "default" then
+		return currentAmount
+	elseif outputItemCalculationType == "total-required-ingredients" then
 		return get_total_ingredients_required(recipe)
 	elseif outputItemCalculationType == "stack-size" then
 		return outputItem["stack_size"]
