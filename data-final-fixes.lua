@@ -12,6 +12,7 @@ local processedRecipes = {}
 
 -- settings
 local globalMultiplier = settings.startup["sgr-global-multiplier"].value
+local globalOutputPrioritizeMax = settings.startup["sgr-global-output-prioritize-max"].value
 
 local outputItemEditingEnabled = settings.startup["sgr-output-item-edit"].value
 local outputItemCalculationType = settings.startup["sgr-output-item-type"].value
@@ -653,12 +654,10 @@ function setRecipeCraftingTime(recipe, amount)
 	--print(dump(get_recipe_name(recipe)) .. " crafting time = " .. dump(t) .. " " .. dump(recipe))
 end
 
-function setRecipeOutputAmount(recipe, recipeOutput, amount)
+function setRecipeOutputAmount(recipe, recipeOutput, outputAmount)
 	-- recipeOutput = {"type":"item","name":"pamk3-battmk3","amount":5} 
 	-- amount = 10
 	-- receipe = {"type":"recipe","name":"rf-pamk3-pamk4","enabled":true,"energy_required":240,"ingredients":{"1":{"type":"item","name":"pamk3-pamk4","amount":2}},"requester_paste_multiplier":1,"icon":"__Power Armor MK3__/graphics/icons/pamk3-pamk4.png","icon_size":64,"icon_mipmaps":4,"category":"recycle-products","subgroup":"recycling","hidden":true,"allow_decomposition":false,"results":{"1":{"type":"item","name":"pamk3-pamk3","amount":1},"2":{"type":"item","name":"pamk3-battmk3","amount":5},"3":{"type":"item","name":"fusion-reactor-equipment","amount":2},"4":{"type":"item","name":"rocket-control-unit","amount":40},"5":{"type":"item","name":"low-density-structure","amount":200}}}
-	local outputAmount =  math.max(1, math.min(amount * globalMultiplier, 65535))
-
 	print("[adjustRecipeOutput] Pre Output " .. dump(outputAmount) .. " of " .. " output: " .. dump(recipeOutput) .. " recipe: " .. dump(recipe))
 	logIndents = logIndents + 1
 
@@ -716,21 +715,21 @@ function adjustRecipeOutput(recipe, recipeOutput, outputItem)
 		return
 	end
 
-	-- multiply by type
+	-- scale with multipliers
 	if itemIsFluid then
-		amount = amount * outputFluidMultiplier
+		amount = amount * outputFluidMultiplier * globalMultiplier
 	else
-		amount = amount * outputItemMultiplier
+		amount = amount * outputItemMultiplier * globalMultiplier
 	end
 
 	-- set the highest amount if we are allowed to
-	-- if amount <= currentAmount then
-	-- 	print("[adjustRecipeOutput] expected amount " .. dump(amount) .. " <= " .. dump(currentAmount) .. ". skipping...")
-	-- 	return
-	-- end
+	if globalOutputPrioritizeMax == true then
+		amount = math.max(amount, currentAmount)
+	end
 
 	-- change amount and clamp to caps
-	setRecipeOutputAmount(recipe, recipeOutput, amount)
+	local scaleOutput =  math.max(1, math.min(amount, 65535))
+	setRecipeOutputAmount(recipe, recipeOutput, scaleOutput)
 end
 
 function getAdjustRecipeOutputAmount(recipe, recipeOutput, outputItem, currentAmount)
