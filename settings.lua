@@ -24,6 +24,13 @@ data:extend(
 	},
 	{
 		type = "bool-setting",
+		name = "sgr-global-output-exceeds-requirements",
+		setting_type = "startup",
+		default_value = true,
+		order = "1.3"
+	},
+	{
+		type = "bool-setting",
 		name = "sgr-stacksize-item-edit",
 		setting_type = "startup",
 		default_value = false,
@@ -167,7 +174,7 @@ data:extend(
 	    name = "sgr-requirement-item-type",
 	    setting_type = "startup",
         default_value = "default",
-        allowed_values = {"default", "custom"},
+        allowed_values = {"default", "custom", "total-required-ingredients"},
 		order = "5.2"
 	},
 	{
@@ -216,5 +223,57 @@ data:extend(
         minimum_value = 0.1,
         maximum_value = 65535,
 		order = "6.3",
+	},
+	{
+		type = "bool-setting",
+		name = "sgr-power-edit",
+		setting_type = "startup",
+		default_value = false,
+		order = "7.0"
+	},
+	{
+	    type = "double-setting",
+	    name = "sgr-power-multiplier",
+	    setting_type = "startup",
+        default_value = 1,
+        minimum_value = 0.01,
+        maximum_value = 65535,
+		order = "7.1"
+	},
+	{
+	    type = "double-setting",
+	    name = "sgr-power-output-multiplier",
+	    setting_type = "startup",
+        default_value = 1,
+        minimum_value = 0.01,
+        maximum_value = 65535,
+		order = "7.2"
+	},
+	{
+	    type = "double-setting",
+	    name = "sgr-power-requirement-multiplier",
+	    setting_type = "startup",
+        default_value = 1,
+        minimum_value = 0.01,
+        maximum_value = 65535,
+		order = "7.3"
+	},
+	{
+	    type = "double-setting",
+	    name = "sgr-power-storage-multiplier",
+	    setting_type = "startup",
+        default_value = 1,
+        minimum_value = 0.01,
+        maximum_value = 65535,
+		order = "7.4"
+	},
+	{
+	    type = "double-setting",
+	    name = "sgr-power-fuel-consumption-multiplier",
+	    setting_type = "startup",
+        default_value = 1,
+        minimum_value = 0.01,
+        maximum_value = 65535,
+		order = "7.5"
 	},
 })

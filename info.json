@@ -1,9 +1,9 @@
 {
   "name": "super-generous-recipes",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "title": "Super Generous Recipes",
   "author": "M4pster",
-  "description": "All recipe ingredient amounts set to 1. The more advanced items you craft the more you get out of them. StackSize is 50 times the output size.",
+  "description": "Speeds up the game for a quicker experience. Lots of settings provided for customization.",
   "dependencies": ["base", 
 	"? Power Armor MK3", 
   	"? reverse-factory", 
@@ -53,7 +53,8 @@
 	"? bobwarfare",
 	"? Krastorio2",
 	"? VoidChestPlus",
-	"? Nanobots"
+	"? Nanobots",
+	"? space-exploration-postprocess"
 ],
   "factorio_version": "1.1"
 }

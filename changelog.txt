@@ -1,8 +1,29 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.7.0
+Date: 7. 06. 2021
+  Update:
+    - Added Power settings to control how much Energy is distributed throughout the game
+  Features:
+    - Added 'Allow Power Editing' (default: Off)
+    - Added 'Power Multiplier' (default: 1)
+    - Added 'Power Output Multiplier' (default: 1)
+    - Added 'Power Requirement Multiplier' (default: 1)
+    - Added 'Power Storage Multiplier' (default: 1)
+    - Added 'Power Fuel Consumption Multiplier' (default: 1)
+---------------------------------------------------------------------------------------------------
+Version: 0.6.2
+Date: 17. 01. 2021
+  Features:
+    - Added 'Output Always Exceeds Requirements' (default: On)
+  Bugfixes:
+    - Fixed 'Kovarex Enrichment Process' giving less uranium 235 and 238 than requried.
+---------------------------------------------------------------------------------------------------
 Version: 0.6.1
 Date: 13. 12. 2020
   Features:
-    - Added Output Always Give Maximum (default: On)
+    - Added 'Output Always Give Maximum' (default: On)
+  Bugfixes:
+    - Fixed Mining Drones's Supply Depots giving really small amount if 
 ---------------------------------------------------------------------------------------------------
 Version: 0.6.0
 Date: 12. 12. 2020
