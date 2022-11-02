@@ -55,6 +55,20 @@ local researchInserterEditingEnabled = settings.startup["sgr-stacksize-inserter-
 local researchInserterStacksizeBonus = settings.startup["sgr-stacksize-inserter"].value
 local researchStackInserterStacksizeBonus = settings.startup["sgr-stacksize-stack-inserter"].value
 
+local researchEditingEnabled = settings.startup["sgr-research-edit"].value
+local researchMultiplier = settings.startup["sgr-research-multiplier"].value
+local researchCostMultiplier = settings.startup["sgr-research-cost-multiplier"].value
+local researchCostCalculationType = settings.startup["sgr-research-cost-type"].value
+local researchCostCustomAmount = settings.startup["sgr-research-cost-custom-amount"].value
+local researchCountMultiplier = settings.startup["sgr-research-count-multiplier"].value
+local researchCountCalculationType = settings.startup["sgr-research-count-type"].value
+local researchCountCustomAmount = settings.startup["sgr-research-count-custom-amount"].value
+local researchTimeMultiplier = settings.startup["sgr-research-time-multiplier"].value
+local researchTimeCalculationType = settings.startup["sgr-research-time-type"].value
+local researchTimeCustomAmount = settings.startup["sgr-research-time-custom-amount"].value
+local researchTimeInfiniteCustomAmount = settings.startup["sgr-research-time-infinite-custom-amount"].value
+
+
 -- debug
 local enableLogs = false
 local logIndents = 0;
@@ -1103,6 +1117,100 @@ function getAdjustRecipeOutputAmount(recipe, recipeOutput, outputItem, currentAm
 	-- return nothing
 	return nil
 end
+
+function getAdjustResearchTimeAmount(currentAmount)
+	if researchTimeCalculationType == "default" then
+		return currentAmount
+	elseif researchTimeCalculationType == "custom" then
+		return researchTimeCustomAmount
+	end
+
+	-- return nothing
+	return nil
+end
+
+function getAdjustResearchTimeFormulaAmount(currentFormula)
+	if researchTimeCalculationType == "default" then
+		return currentFormula
+	elseif researchTimeCalculationType == "custom" then
+		return researchTimeInfiniteCustomAmount
+	end
+
+	-- return nothing
+	return nil
+end
+
+function getAdjustResearchCostAmount(current_amount)
+	if researchCostCalculationType == "default" then
+		return current_amount
+	elseif researchCostCalculationType == "custom" then
+		return researchCostCustomAmount
+	end
+
+	-- return nothing
+	return nil
+end
+
+function getAdjustResearchCountAmount(current_amount)
+	if researchCountCalculationType == "default" then
+		return current_amount
+	elseif researchCountCalculationType == "custom" then
+		return researchCountCustomAmount
+	end
+
+	-- return nothing
+	return nil
+end
+
+
+function adjustResearch(tech)
+	tech_unit = tech.unit -- https://wiki.factorio.com/Prototype/Technology#unit
+		
+	-- time
+	local current_time = tech_unit.time
+	local adjusted_time = getAdjustResearchTimeAmount(current_time) * researchTimeMultiplier * researchMultiplier
+	tech_unit.time = adjusted_time
+
+	-- How many times we need to get craft the ingredients
+	if tech_unit.count ~= nil then
+		local current_count = tech_unit.count 
+		local adjusted_count = getAdjustResearchCountAmount(current_count) * researchCountMultiplier * researchMultiplier
+		tech_unit.count  = math.max(1, math.min(adjusted_count, 65535))
+	else
+		local current_formula = tech_unit.count_formula
+		local adjusted_formula = getAdjustResearchTimeFormulaAmount(current_formula) .. "*" .. researchCountMultiplier .. "*" .. researchMultiplier
+		tech_unit.count_formula = adjusted_formula
+	end
+
+	-- How many of each ingredient are required
+	for index, ingredient in ipairs(tech_unit.ingredients) do
+		local current_cost = ingredient[2]
+		local adjusted_cost = getAdjustResearchCostAmount(current_cost) * researchCostMultiplier * researchMultiplier
+		ingredient[2] = math.max(1, math.min(adjusted_cost, 65535))
+	end
+	
+	-- Stack research changes
+	if tech.effects ~= nil then
+		for j, effect in pairs(tech.effects) do
+				if researchInserterEditingEnabled then
+					-- increase inserter stack size bonus
+					if effect.type == "stack-inserter-capacity-bonus" then
+						effect.modifier = effect.modifier * researchInserterStacksizeBonus
+					elseif effect.type == "inserter-stack-size-bonus" then
+						effect.modifier = effect.modifier * researchStackInserterStacksizeBonus
+				end
+
+				if researchRobotEditingEnabled then
+					-- robot stack size bonus
+					if effect.type == "worker-robot-storage" then
+						effect.modifier = effect.modifier * researchRobotStacksizeBonus
+					end
+				end
+			end
+		end
+	end
+end
+
 -------------------------------------------
 -------------------------------------------
 -------------------------------------------
@@ -1190,27 +1298,9 @@ end
 --
 -- Change research
 --
-local needsToEditResearch = researchRobotEditingEnabled or researchInserterEditingEnabled
+local needsToEditResearch = researchRobotEditingEnabled or researchInserterEditingEnabled or researchEditingEnabled
 if needsToEditResearch then
 	for i, tech in pairs(data.raw.technology) do
-		if tech.effects ~= nil then
-			for j, effect in pairs(tech.effects) do
-					if researchInserterEditingEnabled then
-						-- increase inserter stack size bonus
-						if effect.type == "stack-inserter-capacity-bonus" then
-							effect.modifier = effect.modifier * researchInserterStacksizeBonus
-						elseif effect.type == "inserter-stack-size-bonus" then
-							effect.modifier = effect.modifier * researchStackInserterStacksizeBonus
-					end
-
-					if researchRobotEditingEnabled then
-						-- robot stack size bonus
-						if effect.type == "worker-robot-storage" then
-							effect.modifier = effect.modifier * researchRobotStacksizeBonus
-						end
-					end
-				end
-			end
-		end
+		adjustResearch(tech)
 	end
 end

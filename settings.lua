@@ -173,7 +173,7 @@ data:extend(
 	    type = "string-setting",
 	    name = "sgr-requirement-item-type",
 	    setting_type = "startup",
-        default_value = "default",
+        default_value = "custom",
         allowed_values = {"default", "custom", "total-required-ingredients"},
 		order = "5.2"
 	},
@@ -275,5 +275,106 @@ data:extend(
         minimum_value = 0.01,
         maximum_value = 65535,
 		order = "7.5"
+	},
+	{
+		type = "bool-setting",
+	    name = "sgr-research-edit",
+		setting_type = "startup",
+		default_value = true,
+		order = "8.0"
+	},
+	{
+	    type = "double-setting",
+	    name = "sgr-research-multiplier",
+	    setting_type = "startup",
+        default_value = 1,
+        minimum_value = 0.01,
+        maximum_value = 65535,
+		order = "8.1"
+	},
+	{
+	    type = "double-setting",
+	    name = "sgr-research-cost-multiplier",
+	    setting_type = "startup",
+        default_value = 1,
+        minimum_value = 0.01,
+        maximum_value = 65535,
+		order = "8.2"
+	},
+	{
+	    type = "string-setting",
+	    name = "sgr-research-cost-type",
+	    setting_type = "startup",
+        default_value = "custom",
+        allowed_values = {"default", "custom"},
+		order = "8.3"
+	},
+	{
+	    type = "int-setting",
+	    name = "sgr-research-cost-custom-amount",
+	    setting_type = "startup",
+        default_value = 1,
+        minimum_value = 1,
+        maximum_value = 65535,
+		order = "8.4",
+	},
+	{
+	    type = "double-setting",
+	    name = "sgr-research-count-multiplier",
+	    setting_type = "startup",
+        default_value = 1,
+        minimum_value = 0.01,
+        maximum_value = 65535,
+		order = "8.5"
+	},
+	{
+	    type = "string-setting",
+	    name = "sgr-research-count-type",
+	    setting_type = "startup",
+        default_value = "default",
+        allowed_values = {"default", "custom"},
+		order = "8.6"
+	},
+	{
+	    type = "int-setting",
+	    name = "sgr-research-count-custom-amount",
+	    setting_type = "startup",
+        default_value = 1,
+        minimum_value = 1,
+        maximum_value = 65535,
+		order = "8.7",
+	},
+	{
+	    type = "double-setting",
+	    name = "sgr-research-time-multiplier",
+	    setting_type = "startup",
+        default_value = 1,
+        minimum_value = 0.01,
+        maximum_value = 65535,
+		order = "8.8"
+	},
+	{
+	    type = "string-setting",
+	    name = "sgr-research-time-type",
+	    setting_type = "startup",
+        default_value = "default",
+        allowed_values = {"default", "custom"},
+		order = "8.9"
+	},
+	{
+	    type = "double-setting",
+	    name = "sgr-research-time-custom-amount",
+	    setting_type = "startup",
+        default_value = 1,
+        minimum_value = 0.01,
+        maximum_value = 65535,
+		order = "8.9a",
+	},
+	{
+	    type = "string-setting",
+	    name = "sgr-research-time-infinite-custom-amount",
+	    setting_type = "startup",
+        default_value = "L",
+		order = "8.9b"
 	},
 })
