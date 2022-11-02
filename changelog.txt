@@ -1,4 +1,11 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.8.1
+Date: 3. 11. 2022
+  Bugfixes:
+    - Fixed crash on boot due to stacksize issues in Vanilla and other mods.
+  Update:
+    - Fixed dropdown names for all Research types not localised
+---------------------------------------------------------------------------------------------------
 Version: 0.8.0
 Date: 3. 08. 2022
   Features:
