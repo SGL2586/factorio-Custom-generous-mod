@@ -728,6 +728,11 @@ end
 
 function isItemStackable(item)
 	-- all grid items must be stack_size 1
+	if item.stack_size ~= nil then
+		if item.stack_size <= 1 then
+			return false
+		end
+	end
 	if item["equipment_grid"] ~= nil then
 		return false
 	end
