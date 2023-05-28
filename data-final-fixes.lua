@@ -727,12 +727,18 @@ function adjustCraftingTime(recipe)
 end
 
 function isItemStackable(item)
-	-- all grid items must be stack_size 1
 	if item.stack_size ~= nil then
-		if item.stack_size <= 1 then
+		-- for some reason there is string type stack_size in some mod
+		local stack_size = tonumber(item.stack_size)
+		if stack_size == nil then
+			return false
+		end
+		if stack_size <= 1 then
 			return false
 		end
 	end
+	
+	-- all grid items must be stack_size 1
 	if item["equipment_grid"] ~= nil then
 		return false
 	end
