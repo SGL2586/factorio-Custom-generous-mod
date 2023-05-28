@@ -1,11 +1,21 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.10.0
+Date: 28. 5. 2023
+  Features:
+    - Added 'Allow Mining Drill Editing' (default: Off)
+    - Added 'Mining Drill Speed Multiplier' (default: 1)
+    - Added 'Mining Drill Area Multiplier' (default: 1)
+  Fixed:
+    - Fixed Extended Vanilla mods breaking on startup (Thanks foxwhite25!)
+    - Fixed Basic, advanced and core liquefaction recipes not working with SGR settings
+---------------------------------------------------------------------------------------------------
 Version: 0.9.0
 Date: 16. 4. 2023
   Features:
-    - Added Global Time Multiplier (default: 1)
-    - Added Global Cost Multiplier (default: 1)
-    - Added Global Output Multiplier (default: 1)
-    - Power Recharge Multiplier (default: 1)
+    - Added 'Global Time Multiplier' (default: 1)
+    - Added 'Global Cost Multiplier' (default: 1)
+    - Added 'Global Output Multiplier' (default: 1)
+    - Added 'Power Recharge Multiplier' (default: 1)
   Update:
     - All settings are now off by default except for enabling each setting.
 ---------------------------------------------------------------------------------------------------

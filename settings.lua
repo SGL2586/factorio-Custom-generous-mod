@@ -311,10 +311,35 @@ data:extend(
 	},
 	{
 		type = "bool-setting",
+		name = "sgr-mining-drill-edit",
+		setting_type = "startup",
+		default_value = false,
+		order = "8.0"
+	},
+	{
+		type = "double-setting",
+		name = "sgr-mining-drill-speed-multiplier",
+		setting_type = "startup",
+		default_value = 1,
+		minimum_value = 0.00001,
+		maximum_value = 6553,
+		order = "8.1"
+	},
+	{
+		type = "double-setting",
+		name = "sgr-mining-drill-area-multiplier",
+		setting_type = "startup",
+		default_value = 1,
+		minimum_value = 0.00001,
+		maximum_value = 6553,
+		order = "8.2"
+	},
+	{
+		type = "bool-setting",
 	    name = "sgr-research-edit",
 		setting_type = "startup",
 		default_value = true,
-		order = "8.0"
+		order = "9.0"
 	},
 	{
 	    type = "double-setting",
@@ -323,7 +348,7 @@ data:extend(
         default_value = 1,
         minimum_value = 0.00001,
         maximum_value = 65535,
-		order = "8.1"
+		order = "9.1"
 	},
 	{
 	    type = "double-setting",
@@ -332,7 +357,7 @@ data:extend(
         default_value = 1,
         minimum_value = 0.00001,
         maximum_value = 65535,
-		order = "8.2"
+		order = "9.2"
 	},
 	{
 	    type = "string-setting",
@@ -340,7 +365,7 @@ data:extend(
 	    setting_type = "startup",
         default_value = "default",
         allowed_values = {"default", "custom"},
-		order = "8.3"
+		order = "9.3"
 	},
 	{
 	    type = "int-setting",
@@ -349,7 +374,7 @@ data:extend(
         default_value = 1,
         minimum_value = 1,
         maximum_value = 65535,
-		order = "8.4",
+		order = "9.4",
 	},
 	{
 	    type = "double-setting",
@@ -358,7 +383,7 @@ data:extend(
         default_value = 1,
         minimum_value = 0.00001,
         maximum_value = 65535,
-		order = "8.5"
+		order = "9.5"
 	},
 	{
 	    type = "string-setting",
@@ -366,7 +391,7 @@ data:extend(
 	    setting_type = "startup",
         default_value = "default",
         allowed_values = {"default", "custom"},
-		order = "8.6"
+		order = "9.6"
 	},
 	{
 	    type = "int-setting",
@@ -375,7 +400,7 @@ data:extend(
         default_value = 1,
         minimum_value = 1,
         maximum_value = 65535,
-		order = "8.7",
+		order = "9.7",
 	},
 	{
 	    type = "double-setting",
@@ -384,7 +409,7 @@ data:extend(
         default_value = 1,
         minimum_value = 0.00001,
         maximum_value = 65535,
-		order = "8.8"
+		order = "9.8"
 	},
 	{
 	    type = "string-setting",
@@ -392,7 +417,7 @@ data:extend(
 	    setting_type = "startup",
         default_value = "default",
         allowed_values = {"default", "custom"},
-		order = "8.9"
+		order = "9.9"
 	},
 	{
 	    type = "double-setting",
@@ -401,13 +426,13 @@ data:extend(
         default_value = 1,
         minimum_value = 0.01,
         maximum_value = 65535,
-		order = "8.9a",
+		order = "9.9a",
 	},
 	{
 	    type = "string-setting",
 	    name = "sgr-research-time-infinite-custom-amount",
 	    setting_type = "startup",
         default_value = "L",
-		order = "8.9b"
+		order = "9.9b"
 	},
 })

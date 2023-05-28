@@ -52,6 +52,10 @@ local powerStorageMultiplier = settings.startup["sgr-power-storage-multiplier"].
 local powerFuelConsumptionMultiplier = settings.startup["sgr-power-fuel-consumption-multiplier"].value
 local powerRechargeMultiplier = settings.startup["sgr-power-recharge-multiplier"].value
 
+local miningDrillEditingEnabled = settings.startup["sgr-mining-drill-edit"].value
+local miningDrillSpeedMultiplier = settings.startup["sgr-mining-drill-speed-multiplier"].value
+local miningDrillAreaMultiplier = settings.startup["sgr-mining-drill-area-multiplier"].value
+
 local researchRobotEditingEnabled = settings.startup["sgr-stacksize-robot-stacksize-research-edit"].value
 local researchRobotStacksizeBonus = settings.startup["sgr-stacksize-robot"].value
 
@@ -798,6 +802,27 @@ function adjustItemStackSize(item, recipe)
 	--print("[adjustItemStackSize] Setting stacksize of " .. dump(item["name"]) .. " to " .. dump(stack_size))
 end
 
+function adjustMiningDrill(item)
+	-- make sure we can edit the mining speed
+	local mining_speed = item["mining_speed"]
+	if mining_speed == nil then
+		--print(item["name"] .. " has no mining speed!")
+		return
+	end
+	
+	local resource_searching_radius = item["resource_searching_radius"]
+	if resource_searching_radius == nil then
+		print(item["name"] .. " has no resource_searching_radius!")
+		return
+	end
+	
+	item["mining_speed"] = mining_speed * miningDrillSpeedMultiplier
+	
+	local mining_area = math.max(0.1, resource_searching_radius * miningDrillAreaMultiplier)
+	item["resource_searching_radius"] = mining_area
+	
+end
+
 function adjustPower(item)
 	-- make sure we can edit the power
 	local energy_source = item["energy_source"]
@@ -1240,22 +1265,7 @@ function cacheRecipes()
 			local recipe_name = get_recipe_name(recipe)
 			if recipe_name then
 				--print(dump(recipe.subgroup) .. " " .. dump(recipe.category) .. " " .. dump(recipe.results))
-				if recipe.subgroup == 'fluid-recipes' and recipe.category == 'oil-processing' then
-					-- fluids
-					if recipe.result ~= nil then
-						--print(dump(recipe.result.name) .. " " .. dump(recipe))
-						cached_recipes[recipe.result.name] = recipe
-					elseif recipe.results ~= nil then
-						for j, result in pairs(recipe.results) do
-							--print(dump(result.name) .. " " .. dump(recipe))
-							cached_recipes[result.name] = recipe
-						end
-					end
-				else
-					-- other
-					--print(dump(recipe_name) .. " " .. dump(recipe))
-					cached_recipes[recipe_name] = recipe
-				end
+				cached_recipes[recipe_name] = recipe
 			else
 				--print("Skipped Recipe: " .. dump(recipe))
 			end
@@ -1282,11 +1292,17 @@ end
 --
 -- Change Power
 --
-local canEdit = powerEditingEnabled
+local canEdit = powerEditingEnabled or miningDrillEditingEnabled
 if canEdit == true then
 	for type_key, type_value in pairs(data.raw) do
 		for key, item in pairs(type_value) do
-			adjustPower(item)
+			if powerEditingEnabled then
+				adjustPower(item)
+			end
+			
+			if miningDrillEditingEnabled then
+				adjustMiningDrill(item)
+			end
 		end
 	end
 end
