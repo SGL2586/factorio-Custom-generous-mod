@@ -13,6 +13,9 @@ local processedRecipes = {}
 
 -- settings
 local globalMultiplier = settings.startup["sgr-global-multiplier"].value
+local globalTimeMultiplier = settings.startup["sgr-global-time-multiplier"].value
+local globalCostMultiplier = settings.startup["sgr-global-cost-multiplier"].value
+local globalOutputMultiplier = settings.startup["sgr-global-output-multiplier"].value
 local globalOutputPrioritizeMax = settings.startup["sgr-global-output-prioritize-max"].value
 local globalOutputEnsureExceedsRequirements = settings.startup["sgr-global-output-exceeds-requirements"].value
 
@@ -47,6 +50,7 @@ local powerOutputMultiplier = settings.startup["sgr-power-output-multiplier"].va
 local powerRequirementMultiplier = settings.startup["sgr-power-requirement-multiplier"].value
 local powerStorageMultiplier = settings.startup["sgr-power-storage-multiplier"].value
 local powerFuelConsumptionMultiplier = settings.startup["sgr-power-fuel-consumption-multiplier"].value
+local powerRechargeMultiplier = settings.startup["sgr-power-recharge-multiplier"].value
 
 local researchRobotEditingEnabled = settings.startup["sgr-stacksize-robot-stacksize-research-edit"].value
 local researchRobotStacksizeBonus = settings.startup["sgr-stacksize-robot"].value
@@ -653,7 +657,7 @@ function adjustRequiredIngredientAmount(recipe)
 end
 
 function setRequiredIngredientAmount(ingredient, amount)
-	local scaledAmount = amount * globalMultiplier * requirementMultiplier
+	local scaledAmount = amount * globalMultiplier * requirementMultiplier * globalCostMultiplier
 
 	-- factorio requires minimum of 1
 	local ingredientAmount = math.max(1, math.min(scaledAmount, 65535))
@@ -697,7 +701,7 @@ end
 function adjustCraftingTime(recipe)
 	-- make sure we can edit the crafting time
 	local canEdit = timeEditingEnabled
-	if canEdit == false then
+	if canEdit == false and globalTimeMultiplier == 1 then
 		return
 	end
 
@@ -705,25 +709,28 @@ function adjustCraftingTime(recipe)
 	local outputType = timeCalculationType
 	local currentAmount = getRecipeCraftingTime(recipe)
 	local amount = currentAmount
-	if outputType == "default" then
-		amount = currentAmount
-	elseif outputType == "total-required-ingredients" then
-		amount =  get_total_ingredients_required(recipe)
-	elseif outputType == "custom" then
-		amount = timeCustomAmount
-	elseif outputType == "max-recipe-depth" then
-		local ingredient_depth = get_ingredient_depth(recipe)
-		if ingredient_depth then
-			amount = ingredient_depth + 1
-		else
-			amount = 1
+	if canEdit then
+		if outputType == "default" then
+			amount = currentAmount
+		elseif outputType == "total-required-ingredients" then
+			amount =  get_total_ingredients_required(recipe)
+		elseif outputType == "custom" then
+			amount = timeCustomAmount
+		elseif outputType == "max-recipe-depth" then
+			local ingredient_depth = get_ingredient_depth(recipe)
+			if ingredient_depth then
+				amount = ingredient_depth + 1
+			else
+				amount = 1
+			end
+		elseif outputType == "max-recipe-uses" then
+			amount = get_total_recipies_using_this_recipe(recipe)
 		end
-	elseif outputType == "max-recipe-uses" then
-		amount = get_total_recipies_using_this_recipe(recipe)
 	end
 
 	-- edit ingredient crafting time
-	setRecipeCraftingTime(recipe, amount)
+	local scaledAmount = amount * globalTimeMultiplier
+	setRecipeCraftingTime(recipe, scaledAmount)
 end
 
 function isItemStackable(item)
@@ -805,19 +812,19 @@ function adjustPower(item)
 	convert_power("input_flow_limit", energy_source, powerStorageMultiplier) -- accumulator
 	convert_power("output_flow_limit", energy_source, powerStorageMultiplier) -- accumulator
 
-	convert_power("max_power_output", item, powerOutputMultiplier) -- max_power_output
-	convert_power("min_power_output", item, powerOutputMultiplier) -- min_power_output
-	convert_power("recharge_minimum", item, powerOutputMultiplier) -- recharge_minimum (roboport)
-	convert_power("production", item, powerOutputMultiplier) -- production
-	convert_power("power", item, powerOutputMultiplier) -- change power output for equipment
-	convert_power("charging_energy", item, powerOutputMultiplier)
+	convert_power("max_power_output", item, powerOutputMultiplier * globalOutputMultiplier) -- max_power_output
+	convert_power("min_power_output", item, powerOutputMultiplier * globalOutputMultiplier) -- min_power_output
+	convert_power("recharge_minimum", item, powerRechargeMultiplier * globalOutputMultiplier) -- recharge_minimum (roboport)
+	convert_power("production", item, powerOutputMultiplier * globalOutputMultiplier) -- production
+	convert_power("power", item, powerOutputMultiplier * globalOutputMultiplier) -- change power output for equipment
+	convert_power("charging_energy", item, powerRechargeMultiplier * globalOutputMultiplier)
 
-	convert_power("consumption", item, powerFuelConsumptionMultiplier) -- fuel consumption
+	convert_power("consumption", item, powerFuelConsumptionMultiplier * globalCostMultiplier) -- fuel consumption
 
-	convert_power("energy_usage", item, powerRequirementMultiplier) -- change power required to run
-	convert_power("drain", energy_source, powerRequirementMultiplier) -- inserters
-	convert_power("energy_per_movement", item, powerRequirementMultiplier) -- inserters
-	convert_power("energy_per_rotation", item, powerRequirementMultiplier) -- inserters
+	convert_power("energy_usage", item, powerRequirementMultiplier * globalCostMultiplier) -- change power required to run
+	convert_power("drain", energy_source, powerRequirementMultiplier * globalCostMultiplier) -- inserters
+	convert_power("energy_per_movement", item, powerRequirementMultiplier * globalCostMultiplier) -- inserters
+	convert_power("energy_per_rotation", item, powerRequirementMultiplier * globalCostMultiplier) -- inserters
 
 	-- power output for buildings to avoid changing temporature and whatnot
 	local itemEffectivity = item["effectivity"]
@@ -1030,9 +1037,9 @@ function adjustRecipeOutput(recipe, recipeOutput, outputItem)
 
 	-- scale with multipliers
 	if itemIsFluid then
-		amount = amount * outputFluidMultiplier * globalMultiplier
+		amount = amount * outputFluidMultiplier * globalMultiplier * globalOutputMultiplier
 	else
-		amount = amount * outputItemMultiplier * globalMultiplier
+		amount = amount * outputItemMultiplier * globalMultiplier * globalOutputMultiplier
 	end
 
 	-- set the highest amount if we are allowed to
@@ -1179,7 +1186,7 @@ function adjustResearch(tech)
 		
 	-- time
 	local current_time = tech_unit.time
-	local adjusted_time = getAdjustResearchTimeAmount(current_time) * researchTimeMultiplier * researchMultiplier
+	local adjusted_time = getAdjustResearchTimeAmount(current_time) * researchTimeMultiplier * researchMultiplier * globalTimeMultiplier
 	tech_unit.time = adjusted_time
 
 	-- How many times we need to get craft the ingredients
@@ -1196,7 +1203,7 @@ function adjustResearch(tech)
 	-- How many of each ingredient are required
 	for index, ingredient in ipairs(tech_unit.ingredients) do
 		local current_cost = ingredient[2]
-		local adjusted_cost = getAdjustResearchCostAmount(current_cost) * researchCostMultiplier * researchMultiplier
+		local adjusted_cost = getAdjustResearchCostAmount(current_cost) * researchCostMultiplier * researchMultiplier * globalCostMultiplier
 		ingredient[2] = math.max(1, math.min(adjusted_cost, 65535))
 	end
 	

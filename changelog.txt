@@ -1,4 +1,14 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.9.0
+Date: 16. 4. 2023
+  Features:
+    - Added Global Time Multiplier (default: 1)
+    - Added Global Cost Multiplier (default: 1)
+    - Added Global Output Multiplier (default: 1)
+    - Power Recharge Multiplier (default: 1)
+  Update:
+    - All settings are now off by default except for enabling each setting.
+---------------------------------------------------------------------------------------------------
 Version: 0.8.1
 Date: 3. 11. 2022
   Bugfixes:
