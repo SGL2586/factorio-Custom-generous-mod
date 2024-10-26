@@ -2,15 +2,6 @@
 -- Setup
 -----------------------------
 
--- cache (likely unneeded)
-local cached_items = {} -- https://wiki.factorio.com/Data.raw#item
-local cached_recipes = {}
-local cached_ingredient_counts = {} -- {recipe_name: x}}
-local cached_recipe_ingredients = {} -- {recipe_name: {recipe_name: x}}
-local cached_ingredient_depth = {}
-local cached_recipe_uses = {}
-local processedRecipes = {}
-
 -- max
 local maxAmount = 100
 local energyMin = 0.002
@@ -23,14 +14,25 @@ local powerStorageMultiplier = settings.startup["cgr-Power-Storage-Multiplier"].
 
 -- Function to check if an item is stackable
 local function is_stackable(item_name)
-  -- Retrieve the item from the game's item prototypes
+  -- Check if item is a stackable "item" type
   local item = data.raw["item"][item_name]
-  -- If the item exists and has a stack size greater than 1, it is stackable
   if item and item.stack_size and item.stack_size > 1 then
     return true
-  else
+  end
+
+  -- Check if item is a science pack (tool) type
+  local tool = data.raw["tool"][item_name]
+  if tool and tool.stack_size and tool.stack_size > 1 then
+    return true
+  end
+
+  -- Fluids don’t stack, so we return false if it’s a fluid
+  if data.raw["fluid"][item_name] then
     return false
   end
+
+  -- Default to non-stackable if item type not found
+  return false
 end
 
 function adjustPower(item)
@@ -170,17 +172,27 @@ for i, recipe in pairs(data.raw.recipe) do
   -- Modify results
 	if recipe.results then
 		for i, result in pairs(recipe.results) do
-		-- Check if the item is stackable before applying the multiplier
-			if is_stackable(result.name) then
+		--Fluids
+			if data.raw["fluid"][result.name] then
+				-- Apply multiplier to fluids directly
 				local calcOutput = result.amount * globalOutputMultiplier
 				result.amount = math.max(1, math.min(calcOutput, maxAmount))
+			elseif data.raw["tool"][result.name] then
+				-- Apply multiplier to science packs
+				local calcOutput = result.amount * globalOutputMultiplier
+				result.amount = math.max(1, math.min(calcOutput, maxAmount))
+			
+			-- Default case for regular stackable items
+			elseif is_stackable(result.name) then
+				local calcOutput = result.amount * globalOutputMultiplier
+				result.amount = math.max(1, math.min(calcOutput, maxAmount))
+			
+			-- Non-stackable items
 			else
-			-- For non-stackable items, ensure the amount is 1
 				result.amount = 1
 			end
 		end
 	end
-
   -- Modify crafting time (energy_required)
 	if recipe.energy_required then
 		local calcTime = recipe.energy_required * globalTimeMultiplier
@@ -203,9 +215,12 @@ for i, entity_type in pairs(entity_types) do
                    item.energy_source.type == "heat" or 
                    item.energy_source.type == "fluid" or 
                    item.energy_source.type == "void" then
-                    adjustPower(item)  -- power adjust occurs
+                    adjustPower(item)  -- Apply your power adjustment logic here
                 end
             end
         end
     end
 end
+
+
+
