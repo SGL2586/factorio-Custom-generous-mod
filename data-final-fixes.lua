@@ -4,6 +4,7 @@
 
 -- max
 local maxAmount = 100
+local fluidMaxAmount = 3000
 local energyMin = 0.002
 -- settings
 local globalCostMultiplier = settings.startup["cgr-Cost-Multiplier"].value
@@ -176,12 +177,15 @@ for i, recipe in pairs(data.raw.recipe) do
 			if data.raw["fluid"][result.name] then
 				-- Apply multiplier to fluids directly
 				local calcOutput = result.amount * globalOutputMultiplier
-				result.amount = math.max(1, math.min(calcOutput, maxAmount))
+				result.amount = math.max(1, math.min(calcOutput, fluidMaxAmount))
 			elseif data.raw["tool"][result.name] then
 				-- Apply multiplier to science packs
 				local calcOutput = result.amount * globalOutputMultiplier
 				result.amount = math.max(1, math.min(calcOutput, maxAmount))
-			
+			elseif data.raw["ammo"][result.name] then
+				-- Apply multiplier to ammunition
+				local calcOutput = result.amount * globalOutputMultiplier
+				result.amount = math.max(1, math.min(calcOutput, maxAmount))
 			-- Default case for regular stackable items
 			elseif is_stackable(result.name) then
 				local calcOutput = result.amount * globalOutputMultiplier
